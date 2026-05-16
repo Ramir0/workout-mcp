@@ -24,9 +24,29 @@ Compact reference for AI agents working in this repo.
 
 ## State of the Codebase
 
-- **Current state**: ORM models defined (`workout_mcp/models.py`) with unit tests (`tests/test_models.py`). `main.py` is still a stub. Database config (Alembic, fixtures) not yet implemented. The README describes the full intended architecture (REST API, MCP tools, DB schema).
+- **Current state**: ORM models defined (`workout_mcp/models.py`) with unit tests (`tests/test_models.py`). Database infrastructure implemented: `workout_mcp/config.py`, `workout_mcp/database.py`, Alembic migrations (`alembic/`). `main.py` is still a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema).
 - Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
-- Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
+- Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, `alembic.ini`, `docker-compose.yml`, `.env.example`.
+
+## Local Development
+
+To start PostgreSQL for local development:
+
+```bash
+docker-compose up -d
+```
+
+To run migrations:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head
+```
+
+To run tests (requires PostgreSQL running):
+
+```bash
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest
+```
 
 ## Architecture (from README)
 

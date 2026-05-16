@@ -31,7 +31,9 @@ workout-mcp/
 │   ├── models.py                     # Issue #3 — SQLAlchemy ORM models
 │   ├── database.py                   # Issue #4 — Engine & session factory
 │   └── config.py                     # Issue #4 — Settings & env vars
+├── docker-compose.yml               # Issue #4 — PostgreSQL container
 ├── .env.example                      # Issue #4 — Environment template
+├── alembic.ini                       # Issue #4 — Alembic configuration
 ├── .pre-commit-config.yaml           # Issue #1 — Pre-commit hooks
 ├── main.py                           # Existing — entry point stub
 └── pyproject.toml                    # Issue #1, #3, #4 — Tool & dep config
@@ -656,7 +658,7 @@ git commit -m "test: add model instantiation and relationship unit tests"
 **Files:**
 - Modify: `pyproject.toml`
 
-- [ ] **Step 1: Add psycopg2-binary and alembic**
+- [x] **Step 1: Add psycopg2-binary and alembic**
 
 Add to `[project] dependencies`:
 
@@ -671,12 +673,12 @@ dependencies = [
 ]
 ```
 
-- [ ] **Step 2: Install**
+- [x] **Step 2: Install**
 
 Run: `uv sync`
 Expected: psycopg2-binary, alembic, python-dotenv install.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add pyproject.toml uv.lock
@@ -691,7 +693,7 @@ git commit -m "deps: add psycopg2-binary, alembic, python-dotenv"
 - Create: `workout_mcp/config.py`
 - Create: `workout_mcp/database.py`
 
-- [ ] **Step 1: Create config.py**
+- [x] **Step 1: Create config.py**
 
 ```python
 """Application configuration loaded from environment variables."""
@@ -704,16 +706,16 @@ load_dotenv()
 
 DATABASE_URL: str = os.getenv(
     "DATABASE_URL",
-    "postgresql://localhost:5432/workout_mcp",
+    "postgresql://postgres:postgres@localhost:5432/workout_mcp",
 )
 
 TEST_DATABASE_URL: str = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql://localhost:5432/workout_mcp_test",
+    "postgresql://postgres:postgres@localhost:5432/workout_mcp_test",
 )
 ```
 
-- [ ] **Step 2: Create database.py**
+- [x] **Step 2: Create database.py**
 
 ```python
 """Database engine and session factory."""
@@ -727,19 +729,20 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 ```
 
-- [ ] **Step 3: Create .env.example**
+- [x] **Step 3: Create .env.example**
 
 ```bash
-DATABASE_URL=postgresql://localhost:5432/workout_mcp
-TEST_DATABASE_URL=postgresql://localhost:5432/workout_mcp_test
+# Start PostgreSQL with: docker-compose up -d
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test
 ```
 
-- [ ] **Step 4: Verify type checking**
+- [x] **Step 4: Verify type checking**
 
 Run: `uv run mypy workout_mcp/config.py workout_mcp/database.py`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add workout_mcp/config.py workout_mcp/database.py .env.example
@@ -758,12 +761,12 @@ git commit -m "feat: add database configuration with env-based settings"
 - Create: `alembic/README`
 - Create: `alembic/versions/.gitkeep`
 
-- [ ] **Step 1: Initialize Alembic**
+- [x] **Step 1: Initialize Alembic**
 
 Run: `uv run alembic init alembic`
 Expected: Creates `alembic.ini`, `alembic/env.py`, `alembic/script.py.mako`, `alembic/README`, and `alembic/versions/`.
 
-- [ ] **Step 2: Configure alembic.ini**
+- [x] **Step 2: Configure alembic.ini**
 
 Find the `sqlalchemy.url` line in `alembic.ini` and change it to:
 
@@ -773,7 +776,7 @@ sqlalchemy.url = postgresql://localhost:5432/workout_mcp
 
 Also verify `script_location = alembic` is set.
 
-- [ ] **Step 3: Configure alembic/env.py**
+- [x] **Step 3: Configure alembic/env.py**
 
 Replace the contents of `alembic/env.py` with:
 
@@ -837,11 +840,11 @@ else:
     run_migrations_online()
 ```
 
-- [ ] **Step 4: Ensure versions directory exists**
+- [x] **Step 4: Ensure versions directory exists**
 
 Run: `touch alembic/versions/.gitkeep`
 
-- [ ] **Step 5: Commit Alembic scaffolding**
+- [x] **Step 5: Commit Alembic scaffolding**
 
 ```bash
 git add alembic.ini alembic/ .env.example
@@ -857,58 +860,54 @@ git commit -m "chore: initialize Alembic with model metadata"
 
 **Prerequisite:** PostgreSQL must be running locally. If not available, install Docker or use a local PostgreSQL instance.
 
-- [ ] **Step 1: Ensure PostgreSQL is running**
+- [x] **Step 1: Ensure PostgreSQL is running**
 
 Run: `pg_isready -h localhost -p 5432`
 Expected: `localhost:5432 - accepting connections`
 
-If PostgreSQL is not running, start it (e.g., via Docker):
+If PostgreSQL is not running, start it via Docker Compose:
 
 ```bash
-docker run -d --name workout-postgres \
-  -e POSTGRES_DB=workout_mcp \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 postgres:16
+docker-compose up -d
 ```
 
-- [ ] **Step 2: Create the database if it doesn't exist**
+- [x] **Step 2: Create the database if it doesn't exist**
 
-Run: `createdb -h localhost -U postgres workout_mcp || true`
+Run: `PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE workout_mcp;" || true`
 Expected: Database created (or already exists).
 
-- [ ] **Step 3: Generate initial migration**
+- [x] **Step 3: Generate initial migration**
 
 Run: `uv run alembic revision --autogenerate -m "Initial migration: create routine, workout, exercise, workout_exercise, set tables"`
 Expected: Creates a new file in `alembic/versions/`.
 
-- [ ] **Step 4: Review the generated migration**
+- [x] **Step 4: Review the generated migration**
 
 Read the generated file in `alembic/versions/`. It should contain `upgrade()` with `op.create_table` for all 5 tables and `downgrade()` with `op.drop_table` for all 5 tables. Verify foreign keys and indexes are present.
 
-- [ ] **Step 5: Apply the migration**
+- [x] **Step 5: Apply the migration**
 
 Run: `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head`
 Expected: `INFO  [alembic.runtime.migration] Context impl PostgresqlImpl... Running upgrade  -> <revision>, Initial migration...`
 
-- [ ] **Step 6: Verify tables were created**
+- [x] **Step 6: Verify tables were created**
 
-Run: `psql -h localhost -U postgres -d workout_mcp -c "\dt"`
+Run: `PGPASSWORD=postgres psql -h localhost -U postgres -d workout_mcp -c "\dt"`
 Expected: Lists `routine`, `workout`, `exercise`, `workout_exercise`, `set`, and `alembic_version`.
 
-- [ ] **Step 7: Test downgrade**
+- [x] **Step 7: Test downgrade**
 
 Run: `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic downgrade -1`
 Expected: Tables are dropped.
 
-Verify: `psql -h localhost -U postgres -d workout_mcp -c "\dt"` should show only `alembic_version` or be empty.
+Verify: `PGPASSWORD=postgres psql -h localhost -U postgres -d workout_mcp -c "\dt"` should show only `alembic_version` or be empty.
 
-- [ ] **Step 8: Re-apply upgrade**
+- [x] **Step 8: Re-apply upgrade**
 
 Run: `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head`
 Expected: Tables recreated.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add alembic/versions/

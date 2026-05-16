@@ -8,6 +8,9 @@ dependencies = [
     "httpx>=0.28.1",
     "mcp[cli]>=1.27.1",
     "sqlalchemy>=2.0",
+    "psycopg2-binary>=2.9",
+    "alembic>=1.13",
+    "python-dotenv>=1.0",
 ]
 
 [build-system]
@@ -57,6 +60,10 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["alembic.*"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
