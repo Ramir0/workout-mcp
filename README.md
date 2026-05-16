@@ -180,6 +180,9 @@ Add the server to your MCP client configuration:
 
 ```
 workout-mcp/
+├── .github/
+│   └── workflows/
+│       └── ci.yml             # GitHub Actions CI (lint, typecheck, test)
 ├── main.py                  # MCP server entry point
 ├── pyproject.toml           # Project configuration
 ├── uv.lock                  # Locked dependencies
@@ -217,6 +220,7 @@ This project uses:
 | `mypy` | Static type checking (strict mode) |
 | `pytest` | Test framework |
 | `pre-commit` | Git hooks (auto-runs ruff, mypy on commit) |
+| `GitHub Actions` | CI pipeline (lint, typecheck, test on push/PR) |
 
 Run tooling checks:
 ```bash

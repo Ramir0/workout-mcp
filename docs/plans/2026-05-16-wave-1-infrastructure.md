@@ -266,11 +266,11 @@ git commit -m "chore: verify tooling passes on existing code"
 **Files:**
 - Create: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Create directories**
+- [x] **Step 1: Create directories**
 
 Run: `mkdir -p .github/workflows`
 
-- [ ] **Step 2: Create ci.yml**
+- [x] **Step 2: Create ci.yml**
 
 ```yaml
 name: CI
@@ -360,12 +360,12 @@ jobs:
         run: uv run pytest --cov=workout_mcp --cov-report=term-missing
 ```
 
-- [ ] **Step 3: Verify YAML syntax**
+- [x] **Step 3: Verify YAML syntax**
 
 Run: `uv run pre-commit run check-yaml --all-files`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .github/workflows/ci.yml
@@ -378,14 +378,14 @@ git commit -m "ci: add GitHub Actions workflow for lint, typecheck, and test"
 
 **Files:** None
 
-- [ ] **Step 1: Install act (optional)**
+- [x] **Step 1: Install act (optional)**
 
 If `act` is available locally, run: `act -j lint`
 Expected: Lint job passes.
 
 If `act` is not available, skip this step and rely on the first PR to validate.
 
-- [ ] **Step 2: Push to verify**
+- [x] **Step 2: Push to verify**
 
 ```bash
 git push origin main  # or create a test PR

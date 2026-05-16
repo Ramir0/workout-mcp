@@ -26,7 +26,7 @@ Compact reference for AI agents working in this repo.
 
 - **Early stage**: `main.py` is a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema), but most of it is not yet implemented.
 - Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
-- Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`.
+- Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
 
 ## Architecture (from README)
 
