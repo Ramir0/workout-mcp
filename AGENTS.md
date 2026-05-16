@@ -5,7 +5,7 @@ Compact reference for AI agents working in this repo.
 ## Project
 
 - **Goal**: MCP server + REST API for ingesting and querying workout data from Hevy CSV exports.
-- **Stack**: Python ≥3.13, `uv` for deps, `mcp[cli]`, `httpx`.
+- **Stack**: Python ≥3.13, `uv` for deps, `mcp[cli]`, `httpx`, `sqlalchemy>=2.0`.
 - **Entrypoint**: `main.py` (stub; intended to start the MCP server).
 - **Database**: relational (PostgreSQL) with schema: Routine → Workout → Exercise → Set.
 
@@ -24,7 +24,7 @@ Compact reference for AI agents working in this repo.
 
 ## State of the Codebase
 
-- **Early stage**: `main.py` is a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema), but most of it is not yet implemented.
+- **Current state**: ORM models defined (`workout_mcp/models.py`) with unit tests (`tests/test_models.py`). `main.py` is still a stub. Database config (Alembic, fixtures) not yet implemented. The README describes the full intended architecture (REST API, MCP tools, DB schema).
 - Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
 - Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
 
@@ -39,3 +39,4 @@ Compact reference for AI agents working in this repo.
 - Keep `pyproject.toml` as the single source of truth for project metadata and dependencies.
 - When implementing, match the schema and tool signatures described in `README.md`.
 - Ensure all pre-commit hooks pass before committing (`uv run pre-commit run --all-files`).
+- **Commit freely** when following implementation plans in `docs/plans/` specify exactly when and what to commit.
