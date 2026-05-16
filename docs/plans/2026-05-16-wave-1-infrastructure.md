@@ -402,7 +402,7 @@ Expected: GitHub Actions runs and all three jobs (lint, typecheck, test) appear.
 **Files:**
 - Modify: `pyproject.toml`
 
-- [ ] **Step 1: Add sqlalchemy to dependencies**
+- [x] **Step 1: Add sqlalchemy to dependencies**
 
 Add `"sqlalchemy>=2.0"` to the `[project] dependencies` list in `pyproject.toml`:
 
@@ -414,12 +414,12 @@ dependencies = [
 ]
 ```
 
-- [ ] **Step 2: Install**
+- [x] **Step 2: Install**
 
 Run: `uv sync`
 Expected: SQLAlchemy installs.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add pyproject.toml uv.lock
@@ -434,13 +434,13 @@ git commit -m "deps: add sqlalchemy>=2.0"
 - Create: `workout_mcp/__init__.py`
 - Create: `workout_mcp/models.py`
 
-- [ ] **Step 1: Create workout_mcp/__init__.py**
+- [x] **Step 1: Create workout_mcp/__init__.py**
 
 ```python
 """Workout MCP Server package."""
 ```
 
-- [ ] **Step 2: Create workout_mcp/models.py**
+- [x] **Step 2: Create workout_mcp/models.py**
 
 ```python
 """SQLAlchemy ORM models for workout data."""
@@ -545,17 +545,17 @@ class Set(Base):
         )
 ```
 
-- [ ] **Step 3: Run ruff on new code**
+- [x] **Step 3: Run ruff on new code**
 
 Run: `uv run ruff check workout_mcp/`
 Expected: PASS
 
-- [ ] **Step 4: Run mypy on new code**
+- [x] **Step 4: Run mypy on new code**
 
 Run: `uv run mypy workout_mcp/`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add workout_mcp/
@@ -570,13 +570,13 @@ git commit -m "feat: add SQLAlchemy ORM models for Routine, Workout, Exercise, W
 - Create: `tests/__init__.py`
 - Create: `tests/test_models.py`
 
-- [ ] **Step 1: Create tests/__init__.py**
+- [x] **Step 1: Create tests/__init__.py**
 
 ```python
 """Tests package."""
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 Create `tests/test_models.py`:
 
@@ -635,12 +635,12 @@ def test_relationship_backrefs() -> None:
     assert workout.routine is routine
 ```
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `uv run pytest tests/test_models.py -v`
 Expected: All 7 tests PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/

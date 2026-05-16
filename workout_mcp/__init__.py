@@ -1,0 +1,1 @@
+"""Workout MCP Server package."""

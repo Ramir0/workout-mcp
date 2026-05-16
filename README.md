@@ -182,13 +182,19 @@ Add the server to your MCP client configuration:
 workout-mcp/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml             # GitHub Actions CI (lint, typecheck, test)
-├── main.py                  # MCP server entry point
-├── pyproject.toml           # Project configuration
-├── uv.lock                  # Locked dependencies
-├── .pre-commit-config.yaml  # Pre-commit hook configuration
-├── README.md                # This file
-└── .venv/                   # Virtual environment
+│       └── ci.yml                    # GitHub Actions CI (lint, typecheck, test)
+├── tests/
+│   ├── __init__.py
+│   └── test_models.py                # Model unit tests
+├── workout_mcp/
+│   ├── __init__.py
+│   └── models.py                     # SQLAlchemy ORM models
+├── main.py                           # MCP server entry point
+├── pyproject.toml                    # Project configuration
+├── uv.lock                           # Locked dependencies
+├── .pre-commit-config.yaml           # Pre-commit hook configuration
+├── README.md                         # This file
+└── .venv/                            # Virtual environment
 ```
 
 ## Data Flow
@@ -234,3 +240,4 @@ uv run pre-commit run --all-files  # Run all hooks
 
 - `mcp[cli]>=1.27.1` - Model Context Protocol implementation
 - `httpx>=0.28.1` - HTTP client for API interactions
+- `sqlalchemy>=2.0` - ORM for database access
