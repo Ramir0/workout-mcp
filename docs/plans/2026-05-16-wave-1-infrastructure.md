@@ -46,7 +46,7 @@ workout-mcp/
 **Files:**
 - Modify: `pyproject.toml`
 
-- [ ] **Step 1: Add build system and dev dependency group**
+- [x] **Step 1: Add build system and dev dependency group**
 
 Add `[build-system]` and `[dependency-groups]` to `pyproject.toml`. The full file should be:
 
@@ -79,7 +79,7 @@ dev = [
 ]
 ```
 
-- [ ] **Step 2: Add ruff configuration**
+- [x] **Step 2: Add ruff configuration**
 
 Append to `pyproject.toml`:
 
@@ -105,7 +105,7 @@ quote-style = "double"
 indent-style = "space"
 ```
 
-- [ ] **Step 3: Add mypy configuration**
+- [x] **Step 3: Add mypy configuration**
 
 Append to `pyproject.toml`:
 
@@ -121,7 +121,7 @@ check_untyped_defs = true
 ignore_missing_imports = true
 ```
 
-- [ ] **Step 4: Add pytest configuration**
+- [x] **Step 4: Add pytest configuration**
 
 Append to `pyproject.toml`:
 
@@ -134,12 +134,12 @@ python_functions = ["test_*"]
 addopts = "-v --tb=short"
 ```
 
-- [ ] **Step 5: Install dependencies**
+- [x] **Step 5: Install dependencies**
 
 Run: `uv sync`
 Expected: Dependencies install successfully, `.venv` created/updated.
 
-- [ ] **Step 6: Verify tool availability**
+- [x] **Step 6: Verify tool availability**
 
 Run: `uv run ruff --version`
 Expected: `ruff x.y.z`
@@ -150,7 +150,7 @@ Expected: `mypy x.y.z`
 Run: `uv run pytest --version`
 Expected: `pytest x.y.z`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add pyproject.toml
@@ -166,7 +166,7 @@ git commit -m "chore: add dev tooling dependencies (pytest, ruff, mypy, pre-comm
 **Files:**
 - Create: `.pre-commit-config.yaml`
 
-- [ ] **Step 1: Create .pre-commit-config.yaml**
+- [x] **Step 1: Create .pre-commit-config.yaml**
 
 ```yaml
 repos:
@@ -192,17 +192,17 @@ repos:
         additional_dependencies: [types-python-dateutil]
 ```
 
-- [ ] **Step 2: Install pre-commit hooks**
+- [x] **Step 2: Install pre-commit hooks**
 
 Run: `uv run pre-commit install`
 Expected: `pre-commit installed at .git/hooks/pre-commit`
 
-- [ ] **Step 3: Run pre-commit on all files**
+- [x] **Step 3: Run pre-commit on all files**
 
 Run: `uv run pre-commit run --all-files`
 Expected: All hooks pass (there may be warnings about missing `tests/` or `workout_mcp/`, which is expected).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .pre-commit-config.yaml
@@ -216,7 +216,7 @@ git commit -m "chore: add pre-commit configuration"
 **Files:**
 - Modify: `main.py` (if needed to satisfy tooling)
 
-- [ ] **Step 1: Run ruff check**
+- [x] **Step 1: Run ruff check**
 
 Run: `uv run ruff check .`
 Expected: PASS (no errors on `main.py`)
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Run mypy**
+- [x] **Step 2: Run mypy**
 
 Run: `uv run mypy .`
 Expected: PASS (no errors, possibly "Found 1 source file" or similar)
@@ -245,12 +245,12 @@ module = ["mcp.*"]
 follow_untyped_imports = true
 ```
 
-- [ ] **Step 3: Run pytest**
+- [x] **Step 3: Run pytest**
 
 Run: `uv run pytest`
 Expected: `collected 0 items` or similar — no tests yet, but pytest runs without error.
 
-- [ ] **Step 4: Commit any fixes**
+- [x] **Step 4: Commit any fixes**
 
 ```bash
 git add -A
