@@ -139,6 +139,11 @@ cd workout-mcp
 uv sync
 ```
 
+3. Install pre-commit hooks:
+```bash
+uv run pre-commit install
+```
+
 ## Usage
 
 ### Starting the Server
@@ -175,10 +180,12 @@ Add the server to your MCP client configuration:
 
 ```
 workout-mcp/
-├── main.py              # MCP server entry point
-├── pyproject.toml       # Project configuration
-├── README.md            # This file
-└── .venv/               # Virtual environment
+├── main.py                  # MCP server entry point
+├── pyproject.toml           # Project configuration
+├── uv.lock                  # Locked dependencies
+├── .pre-commit-config.yaml  # Pre-commit hook configuration
+├── README.md                # This file
+└── .venv/                   # Virtual environment
 ```
 
 ## Data Flow
@@ -199,6 +206,25 @@ The MCP tools enable rich querying scenarios such as:
 - **RPE Tracking**: "What's my average RPE for deadlifts?"
 
 ## Development
+
+### Tooling
+
+This project uses:
+
+| Tool | Purpose |
+|------|---------|
+| `ruff` | Linting and formatting |
+| `mypy` | Static type checking (strict mode) |
+| `pytest` | Test framework |
+| `pre-commit` | Git hooks (auto-runs ruff, mypy on commit) |
+
+Run tooling checks:
+```bash
+uv run ruff check .          # Lint
+uv run mypy .                # Type check
+uv run pytest                # Run tests
+uv run pre-commit run --all-files  # Run all hooks
+```
 
 ### Dependencies
 
