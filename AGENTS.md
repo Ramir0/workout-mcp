@@ -14,14 +14,19 @@ Compact reference for AI agents working in this repo.
 | Task | Command |
 |------|---------|
 | Install deps | `uv sync` |
+| Install git hooks | `uv run pre-commit install` |
+| Run linter | `uv run ruff check .` |
+| Run formatter | `uv run ruff format .` |
+| Run type checker | `uv run mypy .` |
+| Run tests | `uv run pytest` |
+| Run all hooks | `uv run pre-commit run --all-files` |
 | Run server | `python main.py` |
-| Import CSV (while server runs) | `curl -X POST http://localhost:8000/import/csv -F "file=@hevy_export.csv"` |
 
 ## State of the Codebase
 
 - **Early stage**: `main.py` is a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema), but most of it is not yet implemented.
-- No tests, linters, formatters, or CI configured yet.
-- `pyproject.toml` and `uv.lock` are the only config files.
+- Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
+- Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`.
 
 ## Architecture (from README)
 
@@ -31,6 +36,6 @@ Compact reference for AI agents working in this repo.
 
 ## Notes for Agents
 
-- Prefer adding tests and tooling (pytest, ruff, mypy) as the project grows.
 - Keep `pyproject.toml` as the single source of truth for project metadata and dependencies.
 - When implementing, match the schema and tool signatures described in `README.md`.
+- Ensure all pre-commit hooks pass before committing (`uv run pre-commit run --all-files`).
