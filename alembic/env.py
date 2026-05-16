@@ -2,7 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
-from alembic import context  # type: ignore[attr-defined]
+from alembic import context
 from workout_mcp.config import DATABASE_URL
 from workout_mcp.models import Base
 

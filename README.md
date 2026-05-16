@@ -144,6 +144,26 @@ uv sync
 uv run pre-commit install
 ```
 
+### Local Development Database
+
+Start PostgreSQL using Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+This starts a PostgreSQL 16 container with:
+- Database: `workout_mcp`
+- User: `postgres`
+- Password: `postgres`
+- Port: `5432`
+
+To run migrations:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head
+```
+
 ## Usage
 
 ### Starting the Server
@@ -183,18 +203,28 @@ workout-mcp/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                    # GitHub Actions CI (lint, typecheck, test)
+├── alembic/
+│   ├── env.py                        # Alembic environment
+│   ├── script.py.mako                # Alembic template
+│   └── versions/                     # Migration scripts
 ├── tests/
 │   ├── __init__.py
-│   └── test_models.py                # Model unit tests
+│   ├── conftest.py                   # Pytest fixtures with transaction isolation
+│   ├── test_models.py                # Model unit tests
+│   └── test_database.py              # Database integration tests
 ├── workout_mcp/
 │   ├── __init__.py
+│   ├── config.py                     # Environment-based configuration
+│   ├── database.py                    # Engine & session factory
 │   └── models.py                     # SQLAlchemy ORM models
+├── docker-compose.yml                # PostgreSQL container for local development
 ├── main.py                           # MCP server entry point
 ├── pyproject.toml                    # Project configuration
 ├── uv.lock                           # Locked dependencies
+├── .env.example                      # Environment template
 ├── .pre-commit-config.yaml           # Pre-commit hook configuration
-├── README.md                         # This file
-└── .venv/                            # Virtual environment
+├── alembic.ini                       # Alembic configuration
+└── README.md                         # This file
 ```
 
 ## Data Flow
