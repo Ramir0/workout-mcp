@@ -1,1 +1,27 @@
-Generic single-database configuration.
+Alembic migrations for Workout MCP Server.
+
+## Running Migrations
+
+Ensure PostgreSQL is running (see docker-compose.yml):
+
+```bash
+docker compose up -d
+```
+
+Apply migrations to the development database:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head
+```
+
+Create a new migration after model changes:
+
+```bash
+uv run alembic revision --autogenerate -m "Description of change"
+```
+
+Apply migrations to the test database:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run alembic upgrade head
+```

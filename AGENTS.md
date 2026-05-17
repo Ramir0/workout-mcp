@@ -18,13 +18,13 @@ Compact reference for AI agents working in this repo.
 | Run linter | `uv run ruff check .` |
 | Run formatter | `uv run ruff format .` |
 | Run type checker | `uv run mypy .` |
-| Run tests | `uv run pytest` |
+| Run tests | `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest` |
 | Run all hooks | `uv run pre-commit run --all-files` |
 | Run server | `python main.py` |
 
 ## State of the Codebase
 
-- **Current state**: ORM models defined (`workout_mcp/models.py`) with unit tests (`tests/test_models.py`). Database infrastructure implemented: `workout_mcp/config.py`, `workout_mcp/database.py`, Alembic migrations (`alembic/`). `main.py` is still a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema).
+- **Current state**: ORM models defined (`workout_mcp/models.py`) with unit tests (`tests/test_models.py`). Database infrastructure implemented: `workout_mcp/config.py`, `workout_mcp/database.py`, Alembic migrations (`alembic/`). Test infrastructure in place: `tests/conftest.py` (transaction-isolated fixtures), `tests/test_database.py` (integration tests). `main.py` is still a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema).
 - Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
 - Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, `alembic.ini`, `docker-compose.yml`, `.env.example`.
 
