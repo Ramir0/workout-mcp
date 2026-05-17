@@ -925,12 +925,12 @@ git commit -m "feat: add initial Alembic migration for all 5 tables"
 
 **Prerequisite:** PostgreSQL must be running locally (see Task 4.4).
 
-- [ ] **Step 1: Create the test database**
+- [x] **Step 1: Create the test database**
 
 Run: `createdb -h localhost -U postgres workout_mcp_test || true`
 Expected: Database created (or already exists).
 
-- [ ] **Step 2: Create conftest.py**
+- [x] **Step 2: Create conftest.py**
 
 ```python
 """Pytest fixtures and configuration."""
@@ -980,12 +980,12 @@ def db_session(db_engine) -> Generator[Session, None, None]:
     connection.close()
 ```
 
-- [ ] **Step 3: Verify conftest.py type checks**
+- [x] **Step 3: Verify conftest.py type checks**
 
 Run: `uv run mypy tests/conftest.py`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/conftest.py
@@ -999,7 +999,7 @@ git commit -m "test: add pytest fixtures with transaction rollback isolation"
 **Files:**
 - Create: `tests/test_database.py`
 
-- [ ] **Step 1: Write integration test for round-trip**
+- [x] **Step 1: Write integration test for round-trip**
 
 ```python
 """Database integration tests verifying ORM round-trips."""
@@ -1091,17 +1091,17 @@ def test_transaction_isolation(db_session: Session) -> None:
     assert count == 1
 ```
 
-- [ ] **Step 2: Run integration tests**
+- [x] **Step 2: Run integration tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_database.py -v`
 Expected: All 4 tests PASS.
 
-- [ ] **Step 3: Verify full test suite**
+- [x] **Step 3: Verify full test suite**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest -v`
 Expected: All tests PASS (7 unit tests + 4 integration tests = 11 total).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/test_database.py
@@ -1114,7 +1114,7 @@ git commit -m "test: add database integration tests for ORM round-trip and isola
 
 **Files:** None
 
-- [ ] **Step 1: Ensure local tooling passes**
+- [x] **Step 1: Ensure local tooling passes**
 
 Run: `uv run ruff check .`
 Expected: PASS
@@ -1128,7 +1128,7 @@ Expected: All tests PASS
 Run: `uv run pre-commit run --all-files`
 Expected: All hooks PASS
 
-- [ ] **Step 2: Push to trigger CI**
+- [x] **Step 2: Push to trigger CI**
 
 ```bash
 git push origin main
@@ -1136,7 +1136,7 @@ git push origin main
 
 Expected: GitHub Actions CI runs. All three jobs (lint, typecheck, test) should now PASS because `workout_mcp/`, `tests/`, and database fixtures exist.
 
-- [ ] **Step 3: Verify CI results**
+- [x] **Step 3: Verify CI results**
 
 Check the GitHub Actions page. All jobs should be green.
 
