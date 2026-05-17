@@ -11,7 +11,7 @@ from workout_mcp.models import Base
 
 
 @pytest.fixture(scope="session")
-def db_engine() -> Generator[Engine, None, None]:
+def db_engine() -> Generator[Engine]:
     """Create a test database engine and schema (once per session)."""
     engine = create_engine(TEST_DATABASE_URL)
     Base.metadata.create_all(engine)
@@ -21,7 +21,7 @@ def db_engine() -> Generator[Engine, None, None]:
 
 
 @pytest.fixture
-def db_session(db_engine: Engine) -> Generator[Session, None, None]:
+def db_session(db_engine: Engine) -> Generator[Session]:
     """Yield a database session with automatic transaction rollback."""
     connection = db_engine.connect()
     transaction = connection.begin()
