@@ -268,6 +268,13 @@ uv run pre-commit run --all-files  # Run all hooks
 
 ### Dependencies
 
-- `mcp[cli]>=1.27.1` - Model Context Protocol implementation
-- `httpx>=0.28.1` - HTTP client for API interactions
-- `sqlalchemy>=2.0` - ORM for database access
+| Package | Purpose |
+|---------|---------|
+| `mcp[cli]>=1.27.1` | Model Context Protocol implementation |
+| `httpx>=0.28.1` | HTTP client for API interactions |
+| `sqlalchemy>=2.0` | ORM for database access |
+| `psycopg2-binary>=2.9` | PostgreSQL driver |
+| `alembic>=1.13` | Database migrations |
+| `python-dotenv>=1.0` | Environment variable management |
+
+**Dev dependencies:** `pytest>=8.0`, `pytest-cov>=5.0`, `ruff>=0.6`, `mypy>=1.11`, `pre-commit>=3.8`
