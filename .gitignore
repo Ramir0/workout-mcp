@@ -12,3 +12,6 @@ wheels/
 
 # Docker
 data/
+
+# Project-specific tools
+.codegraph/
