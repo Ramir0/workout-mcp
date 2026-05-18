@@ -106,12 +106,12 @@ erDiagram
 ┌─────────────────────────────────────────────────────────────┐
 │                      AI Agent / Client                      │
 └───────────────────────────┬─────────────────────────────────┘
-                            │ MCP Protocol
+                            │ MCP Protocol (Streamable HTTP)
 ┌───────────────────────────▼─────────────────────────────────┐
-│                   Workout MCP Server                        │
+│                   FastAPI (port 8000)                       │
 │  ┌──────────────────────┐    ┌──────────────────────────┐   │
-│  │   MCP Tool Handlers  │    │    REST API Endpoints    │   │
-│  │ - Query tools        │    │ - CSV Import             │   │
+│  │    /mcp (FastMCP)    │    │    REST API Endpoints    │   │
+│  │ - Query tools        │    │ - POST /import/csv       │   │
 │  │ - PR calculations    │    │ - Data validation        │   │
 │  └──────────────────────┘    └──────────────────────────┘   │
 │  ┌────────────────────────────────────────────────────────┐ │
@@ -183,18 +183,27 @@ curl -X POST http://localhost:8000/import/csv \
 
 ### MCP Configuration
 
-Add the server to your MCP client configuration:
+The MCP server uses streamable HTTP transport, mounted on FastAPI at `/mcp`. Connect your MCP client to:
 
 ```json
 {
   "mcpServers": {
     "workout": {
-      "command": "python",
-      "args": ["/path/to/workout-mcp/main.py"]
+      "url": "https://workout.amir-aranibar.com/mcp"
     }
   }
 }
 ```
+
+#### Example Queries
+
+Once connected, you can ask your AI agent:
+
+- "Show me all chest workouts from last month"
+- "What's my heaviest squat this year?"
+- "How many workouts did I do this week?"
+- "When was the last time I did deadlifts?"
+- "What's my bench press PR?"
 
 ## Project Structure
 
@@ -227,7 +236,8 @@ workout-mcp/
 │   ├── config.py                     # Environment-based configuration
 │   ├── database.py                   # Engine & session factory
 │   ├── models.py                     # SQLAlchemy ORM models
-│   ├── api.py                         # FastAPI app & REST endpoints
+│   ├── api.py                        # FastAPI app & REST endpoints
+│   ├── mcp_server.py                 # FastMCP server scaffold & tools
 │   └── parser.py                     # Hevy CSV export parser
 ├── docker-compose.yml                # PostgreSQL container for local development
 ├── main.py                           # FastAPI server entry point

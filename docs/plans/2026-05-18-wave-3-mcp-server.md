@@ -30,7 +30,7 @@
 
 ```
 workout-mcp/
-├── .dockerignore                        # NEW — exclude .git, .venv, tests, etc.
+├── .dockerignore                         # NEW — exclude .git, .venv, tests, etc.
 ├── Dockerfile                            # NEW — Docker build
 ├── docker-compose.prod.yml               # NEW — production: app + postgres
 ├── docker-compose.yml                    # EXISTING — local dev (unchanged)
@@ -54,7 +54,7 @@ workout-mcp/
 **Files:**
 - Create: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Create mcp_server.py with FastMCP setup and DB session helper**
+- [x] **Step 1: Create mcp_server.py with FastMCP setup and DB session helper**
 
 ```python
 """MCP server with workout query tools."""
@@ -94,7 +94,7 @@ def get_db_session() -> Generator[Session]:
 Run: `uv run mypy workout_mcp/mcp_server.py`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
@@ -108,7 +108,7 @@ git commit -m "feat: add FastMCP server scaffold with DB session helper"
 **Files:**
 - Modify: `main.py`
 
-- [ ] **Step 1: Update main.py to mount MCP on FastAPI with lifespan**
+- [x] **Step 1: Update main.py to mount MCP on FastAPI with lifespan**
 
 Replace `main.py` with:
 
@@ -160,12 +160,12 @@ if __name__ == "__main__":
 Run: `python main.py` (Ctrl+C after confirming startup)
 Expected: Server starts on port 8000 without errors.
 
-- [ ] **Step 3: Run type checker**
+- [x] **Step 3: Run type checker**
 
 Run: `uv run mypy main.py`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add main.py
@@ -1032,13 +1032,13 @@ Replace the "### MCP Configuration" section with:
 ```markdown
 ### MCP Configuration
 
-Connect to the server at `https://workout-mcp.amir-aranibar.com`:
+Connect to the server at `https://workout.amir-aranibar.com`:
 
 ```json
 {
   "mcpServers": {
     "workout": {
-      "url": "https://workout-mcp.amir-aranibar.com/mcp"
+      "url": "https://workout.amir-aranibar.com/mcp"
     }
   }
 }
