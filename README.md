@@ -223,6 +223,7 @@ workout-mcp/
 │   ├── test_database.py              # Database integration tests
 │   ├── test_api.py                   # API integration tests
 │   ├── test_parser.py                # Parser unit tests
+│   ├── test_mcp_tools.py             # MCP tool integration tests
 │   └── fixtures/
 │       ├── sample_hevy.csv           # Valid multi-routine fixture
 │       ├── empty.csv                 # Header-only fixture
