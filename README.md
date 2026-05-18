@@ -211,12 +211,22 @@ workout-mcp/
 │   ├── __init__.py
 │   ├── conftest.py                   # Pytest fixtures with transaction isolation
 │   ├── test_models.py                # Model unit tests
-│   └── test_database.py              # Database integration tests
+│   ├── test_database.py              # Database integration tests
+│   ├── test_parser.py                # Parser unit tests
+│   └── fixtures/
+│       ├── sample_hevy.csv           # Valid multi-routine fixture
+│       ├── empty.csv                 # Header-only fixture
+│       ├── missing_columns.csv       # Missing required column
+│       ├── malformed_date.csv        # Bad date format
+│       ├── invalid_weight.csv        # Negative weight
+│       ├── weight_without_reps.csv   # Weight without reps
+│       └── cardio.csv                # Empty weight & reps (cardio)
 ├── workout_mcp/
 │   ├── __init__.py
 │   ├── config.py                     # Environment-based configuration
-│   ├── database.py                    # Engine & session factory
-│   └── models.py                     # SQLAlchemy ORM models
+│   ├── database.py                   # Engine & session factory
+│   ├── models.py                     # SQLAlchemy ORM models
+│   └── parser.py                     # Hevy CSV export parser
 ├── docker-compose.yml                # PostgreSQL container for local development
 ├── main.py                           # MCP server entry point
 ├── pyproject.toml                    # Project configuration
@@ -229,8 +239,8 @@ workout-mcp/
 
 ## Data Flow
 
-1. **Import**: CSV data from Hevy is parsed and normalized
-2. **Storage**: Data is persisted in the relational schema (Routine -> Workout -> Exercise -> Set)
+1. **Import**: CSV data from Hevy is parsed and validated by `workout_mcp/parser.py`
+2. **Storage**: Data is persisted in the relational schema (Routine -> Workout -> Exercise -> Set) via the REST API
 3. **Query**: MCP tools provide filtered access to workout history
 4. **Analysis**: AI agents can calculate trends, PRs, volume, and training patterns
 
@@ -276,5 +286,8 @@ uv run pre-commit run --all-files  # Run all hooks
 | `psycopg2-binary>=2.9` | PostgreSQL driver |
 | `alembic>=1.13` | Database migrations |
 | `python-dotenv>=1.0` | Environment variable management |
+| `fastapi>=0.115` | REST API framework |
+| `uvicorn>=0.32` | ASGI server |
+| `python-multipart>=0.0.12` | Multipart form parsing for file uploads |
 
 **Dev dependencies:** `pytest>=8.0`, `pytest-cov>=5.0`, `ruff>=0.6`, `mypy>=1.11`, `pre-commit>=3.8`

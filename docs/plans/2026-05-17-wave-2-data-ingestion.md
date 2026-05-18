@@ -74,7 +74,7 @@ workout-mcp/
 **Files:**
 - Modify: `pyproject.toml`
 
-- [ ] **Step 1: Add fastapi, uvicorn, and python-multipart to dependencies**
+- [x] **Step 1: Add fastapi, uvicorn, and python-multipart to dependencies**
 
 Edit `pyproject.toml` dependencies list:
 
@@ -92,12 +92,12 @@ dependencies = [
 ]
 ```
 
-- [ ] **Step 2: Install dependencies**
+- [x] **Step 2: Install dependencies**
 
 Run: `uv sync`
 Expected: Dependencies install successfully.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add pyproject.toml uv.lock
@@ -111,7 +111,7 @@ git commit -m "deps: add fastapi, uvicorn, python-multipart for REST API"
 **Files:**
 - Create: `workout_mcp/parser.py`
 
-- [ ] **Step 1: Create parser.py**
+- [x] **Step 1: Create parser.py**
 
 ```python
 """Hevy CSV export parser."""
@@ -338,12 +338,12 @@ def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
     return list(routines.values())
 ```
 
-- [ ] **Step 2: Run type checker on parser**
+- [x] **Step 2: Run type checker on parser**
 
 Run: `uv run mypy workout_mcp/parser.py`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add workout_mcp/parser.py
@@ -363,7 +363,7 @@ git commit -m "feat: add Hevy CSV parser with validation and nested structure"
 - Create: `tests/fixtures/weight_without_reps.csv`
 - Create: `tests/fixtures/cardio.csv`
 
-- [ ] **Step 1: Create valid sample fixture**
+- [x] **Step 1: Create valid sample fixture**
 
 Create `tests/fixtures/sample_hevy.csv`:
 
@@ -375,7 +375,7 @@ Create `tests/fixtures/sample_hevy.csv`:
 "Pull Day","Jan 2, 2024, 10:00 AM","Jan 2, 2024, 11:00 AM","","Deadlift","","",0,"normal",180,5,,0,9
 ```
 
-- [ ] **Step 2: Create edge-case fixtures**
+- [x] **Step 2: Create edge-case fixtures**
 
 Create `tests/fixtures/empty.csv`:
 
@@ -418,7 +418,7 @@ Create `tests/fixtures/cardio.csv`:
 "Cardio Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Treadmill","","",0,"normal",,,,0.5,600,
 ```
 
-- [ ] **Step 3: Commit fixtures**
+- [x] **Step 3: Commit fixtures**
 
 ```bash
 git add tests/fixtures/
@@ -432,7 +432,7 @@ git commit -m "test: add Hevy CSV fixtures for parser edge cases"
 **Files:**
 - Create: `tests/test_parser.py`
 
-- [ ] **Step 1: Write parser tests**
+- [x] **Step 1: Write parser tests**
 
 Create `tests/test_parser.py`:
 
@@ -570,12 +570,12 @@ def test_exercise_order_preserved() -> None:
     assert len(exercises[0].sets) == 2
 ```
 
-- [ ] **Step 2: Run parser tests**
+- [x] **Step 2: Run parser tests**
 
 Run: `uv run pytest tests/test_parser.py -v`
 Expected: All 9 tests PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_parser.py
@@ -591,7 +591,7 @@ git commit -m "test: add parser unit tests covering valid and edge cases"
 - Modify: `alembic/versions/9d409c54bac0_initial_migration_create_routine_.py`
 - Create: New Alembic migration
 
-- [ ] **Step 1: Add unique constraints to models**
+- [x] **Step 1: Add unique constraints to models**
 
 Edit `workout_mcp/models.py` — add `unique=True` / `UniqueConstraint`:
 
@@ -652,15 +652,15 @@ class Set(Base):
     ...
 ```
 
-- [ ] **Step 2: Generate Alembic migration**
+- [x] **Step 2: Generate Alembic migration**
 
 Run: `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic revision --autogenerate -m "add_unique_constraints_for_upsert"`
 
-- [ ] **Step 3: Review and apply migration**
+- [x] **Step 3: Review and apply migration**
 
 Run: `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add workout_mcp/models.py alembic/versions/
