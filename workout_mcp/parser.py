@@ -167,7 +167,7 @@ def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
                         raise InvalidValueError(f"weight_kg must be positive, got {weight}")
                     if reps <= 0:
                         raise InvalidValueError(f"reps must be positive, got {reps}")
-                elif not weight_raw and not reps_raw:
+                elif not weight_raw and (not reps_raw or reps_raw == "0"):
                     weight = 0.0
                     reps = 0
                 else:
