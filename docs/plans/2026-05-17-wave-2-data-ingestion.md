@@ -69,7 +69,7 @@ workout-mcp/
 
 ## Issue #10: Implement Hevy CSV Parser
 
-### Task 6.1: Add FastAPI and server dependencies
+### Task 10.1: Add FastAPI and server dependencies
 
 **Files:**
 - Modify: `pyproject.toml`
@@ -81,7 +81,7 @@ Edit `pyproject.toml` dependencies list:
 ```toml
 dependencies = [
     "httpx>=0.28.1",
-    "mcp[cli]>=1.27.1",
+    "mcp[cli]>=1.211.1",
     "sqlalchemy>=2.0",
     "psycopg2-binary>=2.9",
     "alembic>=1.13",
@@ -106,7 +106,7 @@ git commit -m "deps: add fastapi, uvicorn, python-multipart for REST API"
 
 ---
 
-### Task 6.2: Create parser module
+### Task 10.2: Create parser module
 
 **Files:**
 - Create: `workout_mcp/parser.py`
@@ -352,7 +352,7 @@ git commit -m "feat: add Hevy CSV parser with validation and nested structure"
 
 ---
 
-### Task 6.3: Create test fixtures
+### Task 10.3: Create test fixtures
 
 **Files:**
 - Create: `tests/fixtures/sample_hevy.csv`
@@ -427,7 +427,7 @@ git commit -m "test: add Hevy CSV fixtures for parser edge cases"
 
 ---
 
-### Task 6.4: Write parser unit tests
+### Task 10.4: Write parser unit tests
 
 **Files:**
 - Create: `tests/test_parser.py`
@@ -584,7 +584,7 @@ git commit -m "test: add parser unit tests covering valid and edge cases"
 
 ---
 
-### Task 6.5: Add unique constraints for upsert support
+### Task 10.5: Add unique constraints for upsert support
 
 **Files:**
 - Modify: `workout_mcp/models.py`
@@ -671,7 +671,7 @@ git commit -m "feat: add unique constraints for upsert support"
 
 ## Issue #11: Implement REST API Endpoint `POST /import/csv`
 
-### Task 7.1: Create FastAPI app with import endpoint
+### Task 11.1: Create FastAPI app with import endpoint
 
 **Files:**
 - Create: `workout_mcp/api.py`
@@ -851,7 +851,7 @@ git commit -m "feat: add FastAPI app with POST /import/csv endpoint"
 
 ---
 
-### Task 7.2: Update main.py to run the FastAPI server
+### Task 11.2: Update main.py to run the FastAPI server
 
 **Files:**
 - Modify: `main.py`
@@ -888,7 +888,7 @@ git commit -m "feat: run FastAPI app via uvicorn in main.py"
 
 ---
 
-### Task 7.3: Add TestClient fixture for API tests
+### Task 11.3: Add TestClient fixture for API tests
 
 **Files:**
 - Modify: `tests/conftest.py`
@@ -968,7 +968,7 @@ git commit -m "test: add TestClient fixture with DB dependency override"
 
 ---
 
-### Task 7.4: Write API integration tests
+### Task 11.4: Write API integration tests
 
 **Files:**
 - Create: `tests/test_api.py`
@@ -1117,7 +1117,7 @@ git commit -m "test: add API integration tests for CSV import endpoint"
 
 ---
 
-### Task 7.5: Verify full test suite and tooling
+### Task 11.5: Verify full test suite and tooling
 
 **Files:** None
 
@@ -1156,31 +1156,31 @@ git commit -m "chore: verify all tests and tooling pass for Wave 2"
 | Spec Requirement | Implementing Task |
 |---|---|
 | Research/document Hevy CSV format | Observed from `data/workouts.csv`; parser handles all columns |
-| Read CSV from file-like object or path | Task 6.2 — `parse_hevy_csv(source: TextIO)` |
-| Normalize rows into nested structure | Task 6.2 — `ParsedRoutine`, `ParsedWorkout`, `ParsedExercise`, `ParsedSet` |
-| Validate required fields and types | Task 6.2 — `_parse_int`, `_parse_float`, `_parse_datetime`, `_parse_optional_float` |
-| Reject malformed rows with descriptive errors | Task 6.2 — `ParseError` hierarchy with specific messages |
-| Handle date/time parsing (Hevy format) | Task 6.2 — `datetime.strptime(stripped, "%b %d, %Y, %I:%M %p")` |
-| Edge case: empty CSV | Task 6.3 fixture + Task 6.4 test |
-| Edge case: missing required columns | Task 6.3 fixture + Task 6.4 test |
-| Edge case: malformed dates | Task 6.3 fixture + Task 6.4 test |
-| Edge case: negative/zero weight or reps | Task 6.3 fixture + Task 6.4 test |
-| Edge case: mixed/empty units (cardio) | Task 6.3 fixture + Task 6.4 test (`weight=0.0`, `reps=0`) |
-| Set up FastAPI app scaffold | Task 7.1 — `workout_mcp/api.py` |
-| Accept multipart file upload | Task 7.1 — `UploadFile = File(...)` |
-| Parse CSV via parser | Task 7.1 — `parse_hevy_csv(io.StringIO(content))` |
-| Persist to database using ORM models | Task 7.1 — explicit ORM creation with `db.flush()` |
-| Upsert: Routine deduplicate by name | Task 7.1 — `db.query(Routine).filter_by(name=...).first()` |
-| Upsert: Exercise deduplicate by name | Task 7.1 — `db.query(Exercise).filter_by(name=...).first()` |
-| Upsert: Workout deduplicate by `(routine_id, start, end)` | Task 7.1 — query before create |
-| Upsert: WorkoutExercise deduplicate by `(workout_id, exercise_id)` | Task 7.1 — query before create; updates `exercise_index` |
-| Upsert: Set deduplicate by `(workout_exercise_id, set_index)` | Task 7.1 — query before create; discards if exists with warning |
-| Rollback entire transaction on partial failure | Task 7.1 — `try/except` with `db.rollback()` |
-| Return JSON summary with created/discarded/warnings | Task 7.1 — returns nested counts dict + warnings list |
-| Integration test with fixture CSV | Task 7.4 — `test_import_csv_success` |
-| Duplicate imports fully idempotent | Task 7.4 — `test_import_csv_idempotent` |
-| Existing sets discarded on re-import | Task 7.4 — `test_import_csv_discards_existing_set` |
-| Malformed CSV returns 4xx with clear message | Task 7.4 — `test_import_csv_empty_file`, `test_import_csv_malformed_date` |
+| Read CSV from file-like object or path | Task 10.2 — `parse_hevy_csv(source: TextIO)` |
+| Normalize rows into nested structure | Task 10.2 — `ParsedRoutine`, `ParsedWorkout`, `ParsedExercise`, `ParsedSet` |
+| Validate required fields and types | Task 10.2 — `_parse_int`, `_parse_float`, `_parse_datetime`, `_parse_optional_float` |
+| Reject malformed rows with descriptive errors | Task 10.2 — `ParseError` hierarchy with specific messages |
+| Handle date/time parsing (Hevy format) | Task 10.2 — `datetime.strptime(stripped, "%b %d, %Y, %I:%M %p")` |
+| Edge case: empty CSV | Task 10.3 fixture + Task 10.4 test |
+| Edge case: missing required columns | Task 10.3 fixture + Task 10.4 test |
+| Edge case: malformed dates | Task 10.3 fixture + Task 10.4 test |
+| Edge case: negative/zero weight or reps | Task 10.3 fixture + Task 10.4 test |
+| Edge case: mixed/empty units (cardio) | Task 10.3 fixture + Task 10.4 test (`weight=0.0`, `reps=0`) |
+| Set up FastAPI app scaffold | Task 11.1 — `workout_mcp/api.py` |
+| Accept multipart file upload | Task 11.1 — `UploadFile = File(...)` |
+| Parse CSV via parser | Task 11.1 — `parse_hevy_csv(io.StringIO(content))` |
+| Persist to database using ORM models | Task 11.1 — explicit ORM creation with `db.flush()` |
+| Upsert: Routine deduplicate by name | Task 11.1 — `db.query(Routine).filter_by(name=...).first()` |
+| Upsert: Exercise deduplicate by name | Task 11.1 — `db.query(Exercise).filter_by(name=...).first()` |
+| Upsert: Workout deduplicate by `(routine_id, start, end)` | Task 11.1 — query before create |
+| Upsert: WorkoutExercise deduplicate by `(workout_id, exercise_id)` | Task 11.1 — query before create; updates `exercise_index` |
+| Upsert: Set deduplicate by `(workout_exercise_id, set_index)` | Task 11.1 — query before create; discards if exists with warning |
+| Rollback entire transaction on partial failure | Task 11.1 — `try/except` with `db.rollback()` |
+| Return JSON summary with created/discarded/warnings | Task 11.1 — returns nested counts dict + warnings list |
+| Integration test with fixture CSV | Task 11.4 — `test_import_csv_success` |
+| Duplicate imports fully idempotent | Task 11.4 — `test_import_csv_idempotent` |
+| Existing sets discarded on re-import | Task 11.4 — `test_import_csv_discards_existing_set` |
+| Malformed CSV returns 4xx with clear message | Task 11.4 — `test_import_csv_empty_file`, `test_import_csv_malformed_date` |
 
 **No gaps found.**
 
