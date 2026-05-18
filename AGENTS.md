@@ -6,7 +6,7 @@ Compact reference for AI agents working in this repo.
 
 - **Goal**: MCP server + REST API for ingesting and querying workout data from Hevy CSV exports.
 - **Stack**: Python ≥3.13, `uv` for deps, `mcp[cli]`, `httpx`, `sqlalchemy>=2.0`.
-- **Entrypoint**: `main.py` (stub; intended to start the MCP server).
+- **Entrypoint**: `main.py` (runs FastAPI via uvicorn on port 8000).
 - **Database**: relational (PostgreSQL) with schema: Routine → Workout → Exercise → Set.
 
 ## Commands
@@ -24,7 +24,7 @@ Compact reference for AI agents working in this repo.
 
 ## State of the Codebase
 
-- **Current state**: ORM models defined (`workout_mcp/models.py`) with unique constraints for upsert support. Database infrastructure implemented: `workout_mcp/config.py`, `workout_mcp/database.py`, Alembic migrations (`alembic/`). Hevy CSV parser implemented (`workout_mcp/parser.py`) with test fixtures and unit tests. Test infrastructure in place: `tests/conftest.py` (transaction-isolated fixtures), `tests/test_database.py` (integration tests), `tests/test_parser.py` (parser tests), `tests/fixtures/` (CSV test data). `main.py` is still a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema). Issue #11 (REST API endpoint) is next.
+- **Current state**: ORM models defined (`workout_mcp/models.py`) with unique constraints for upsert support. Database infrastructure implemented: `workout_mcp/config.py`, `workout_mcp/database.py`, Alembic migrations (`alembic/`). Hevy CSV parser implemented (`workout_mcp/parser.py`) with test fixtures and unit tests. FastAPI REST API implemented (`workout_mcp/api.py`) with `POST /import/csv` endpoint for CSV ingestion with upsert/deduplication. `main.py` runs the FastAPI server via uvicorn. Test infrastructure in place: `tests/conftest.py` (transaction-isolated fixtures + TestClient), `tests/test_database.py` (integration tests), `tests/test_parser.py` (parser tests), `tests/test_api.py` (API integration tests), `tests/fixtures/` (CSV test data). Wave 2 completed. MCP tools are next.
 - Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
 - Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, `alembic.ini`, `docker-compose.yml`, `.env.example`.
 

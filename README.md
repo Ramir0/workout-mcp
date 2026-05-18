@@ -212,6 +212,7 @@ workout-mcp/
 │   ├── conftest.py                   # Pytest fixtures with transaction isolation
 │   ├── test_models.py                # Model unit tests
 │   ├── test_database.py              # Database integration tests
+│   ├── test_api.py                   # API integration tests
 │   ├── test_parser.py                # Parser unit tests
 │   └── fixtures/
 │       ├── sample_hevy.csv           # Valid multi-routine fixture
@@ -226,9 +227,10 @@ workout-mcp/
 │   ├── config.py                     # Environment-based configuration
 │   ├── database.py                   # Engine & session factory
 │   ├── models.py                     # SQLAlchemy ORM models
+│   ├── api.py                         # FastAPI app & REST endpoints
 │   └── parser.py                     # Hevy CSV export parser
 ├── docker-compose.yml                # PostgreSQL container for local development
-├── main.py                           # MCP server entry point
+├── main.py                           # FastAPI server entry point
 ├── pyproject.toml                    # Project configuration
 ├── uv.lock                           # Locked dependencies
 ├── .env.example                      # Environment template
