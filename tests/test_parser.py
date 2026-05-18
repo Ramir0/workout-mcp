@@ -120,6 +120,17 @@ def test_cardio_row() -> None:
     assert set_.rpe is None
 
 
+def test_treadmill_weight_empty_reps_zero() -> None:
+    """Weight empty with reps=0 (treadmill) should be treated as cardio."""
+    with open(FIXTURES_DIR / "treadmill.csv", encoding="utf-8") as f:
+        routines = parse_hevy_csv(f)
+
+    assert len(routines) == 1
+    set_ = routines[0].workouts[0].exercises[0].sets[0]
+    assert set_.weight == 0.0
+    assert set_.reps == 0
+
+
 def test_exercise_order_preserved() -> None:
     csv_text = (
         '"title","start_time","end_time","description","exercise_title",'

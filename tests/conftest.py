@@ -3,6 +3,7 @@
 from collections.abc import Generator
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, SessionTransaction, sessionmaker
 
@@ -43,3 +44,16 @@ def db_session(db_engine: Engine) -> Generator[Session]:
     session.close()
     transaction.rollback()
     connection.close()
+
+
+@pytest.fixture
+def client(db_session: Session) -> Generator[TestClient]:
+    """Create a TestClient with the test database session injected."""
+    from workout_mcp.api import app, get_db
+
+    def override_get_db() -> Generator[Session]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app)
+    del app.dependency_overrides[get_db]

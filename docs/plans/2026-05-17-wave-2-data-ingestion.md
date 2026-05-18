@@ -676,7 +676,7 @@ git commit -m "feat: add unique constraints for upsert support"
 **Files:**
 - Create: `workout_mcp/api.py`
 
-- [ ] **Step 1: Create api.py**
+- [x] **Step 1: Create api.py**
 
 ```python
 """FastAPI application and REST API endpoints."""
@@ -837,12 +837,12 @@ def import_csv(
     }
 ```
 
-- [ ] **Step 2: Run type checker on API**
+- [x] **Step 2: Run type checker on API**
 
 Run: `uv run mypy workout_mcp/api.py`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add workout_mcp/api.py
@@ -856,7 +856,7 @@ git commit -m "feat: add FastAPI app with POST /import/csv endpoint"
 **Files:**
 - Modify: `main.py`
 
-- [ ] **Step 1: Replace main.py contents**
+- [x] **Step 1: Replace main.py contents**
 
 ```python
 """Entry point for the Workout MCP Server."""
@@ -874,12 +874,12 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Verify main.py type checks**
+- [x] **Step 2: Verify main.py type checks**
 
 Run: `uv run mypy main.py`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add main.py
@@ -893,7 +893,7 @@ git commit -m "feat: run FastAPI app via uvicorn in main.py"
 **Files:**
 - Modify: `tests/conftest.py`
 
-- [ ] **Step 1: Update conftest.py with client fixture**
+- [x] **Step 1: Update conftest.py with client fixture**
 
 Replace `tests/conftest.py` with:
 
@@ -959,7 +959,7 @@ def client(db_session: Session) -> Generator[TestClient]:
     del app.dependency_overrides[get_db]
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add tests/conftest.py
@@ -973,7 +973,7 @@ git commit -m "test: add TestClient fixture with DB dependency override"
 **Files:**
 - Create: `tests/test_api.py`
 
-- [ ] **Step 1: Write API tests**
+- [x] **Step 1: Write API tests**
 
 Create `tests/test_api.py`:
 
@@ -1103,12 +1103,12 @@ def test_import_csv_malformed_date(client: TestClient) -> None:
     assert "Unable to parse date" in response.json()["detail"]
 ```
 
-- [ ] **Step 2: Run API tests**
+- [x] **Step 2: Run API tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_api.py -v`
 Expected: All 6 tests PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_api.py
@@ -1121,27 +1121,27 @@ git commit -m "test: add API integration tests for CSV import endpoint"
 
 **Files:** None
 
-- [ ] **Step 1: Run all tests**
+- [x] **Step 1: Run all tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest -v`
 Expected: All tests PASS (7 model + 4 database + 9 parser + 6 API = 26 total).
 
-- [ ] **Step 2: Run linter**
+- [x] **Step 2: Run linter**
 
 Run: `uv run ruff check .`
 Expected: PASS
 
-- [ ] **Step 3: Run type checker**
+- [x] **Step 3: Run type checker**
 
 Run: `uv run mypy .`
 Expected: PASS
 
-- [ ] **Step 4: Run pre-commit**
+- [x] **Step 4: Run pre-commit**
 
 Run: `uv run pre-commit run --all-files`
 Expected: All hooks PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git commit -m "chore: verify all tests and tooling pass for Wave 2"
