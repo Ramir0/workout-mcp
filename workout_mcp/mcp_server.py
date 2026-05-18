@@ -118,3 +118,35 @@ def get_workout_by_routine(routine_name: str) -> list[dict[str, object]]:
     """
     with get_db_session() as db:
         return _get_workout_by_routine(db, routine_name)
+
+
+def _get_workout_by_exercise(db: Session, exercise_name: str) -> list[dict[str, object]]:
+    """Core logic for get_workout_by_exercise — testable with any session."""
+    from sqlalchemy import select
+
+    from workout_mcp.models import Exercise
+
+    stmt = (
+        select(Workout)
+        .options(
+            joinedload(Workout.routine),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.exercise),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.sets),
+        )
+        .join(Workout.workout_exercises)
+        .join(WorkoutExercise.exercise)
+        .filter(Exercise.name == exercise_name)
+        .order_by(Workout.start)
+    )
+    workouts = db.execute(stmt).unique().scalars().all()
+    return [_serialize_workout(w) for w in workouts]
+
+
+@mcp.tool()
+def get_workout_by_exercise(exercise_name: str) -> list[dict[str, object]]:
+    """Retrieve all workouts that contain a specific exercise.
+
+    Returns full workout details (all exercises and sets) to preserve workout context.
+    """
+    with get_db_session() as db:
+        return _get_workout_by_exercise(db, exercise_name)

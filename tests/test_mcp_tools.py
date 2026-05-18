@@ -102,3 +102,22 @@ def test_get_workout_by_routine_empty(db_session: Session) -> None:
 
     results = _get_workout_by_routine(db_session, "Nonexistent")
     assert results == []
+
+
+def test_get_workout_by_exercise(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_workout_by_exercise
+
+    results = _get_workout_by_exercise(db_session, "Bench Press")
+    assert len(results) == 2
+    assert results[0]["routine"] == "Push Day"
+    # Should include ALL exercises for the workout, not just Bench Press
+    assert len(results[0]["exercises"]) == 2  # type: ignore[arg-type]
+
+
+def test_get_workout_by_exercise_empty(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_workout_by_exercise
+
+    results = _get_workout_by_exercise(db_session, "Curls")
+    assert results == []
