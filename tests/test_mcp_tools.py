@@ -82,3 +82,23 @@ def test_get_workout_by_date_range_empty(db_session: Session) -> None:
 
     results = _get_workout_by_date_range(db_session, "2025-01-01", "2025-01-31")
     assert results == []
+
+
+def test_get_workout_by_routine(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_workout_by_routine
+
+    results = _get_workout_by_routine(db_session, "Push Day")
+    assert len(results) == 2
+    assert results[0]["routine"] == "Push Day"
+    exercise_names = [e["name"] for e in results[0]["exercises"]]  # type: ignore[attr-defined]
+    assert "Bench Press" in exercise_names
+    assert "Squat" in exercise_names
+
+
+def test_get_workout_by_routine_empty(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_workout_by_routine
+
+    results = _get_workout_by_routine(db_session, "Nonexistent")
+    assert results == []

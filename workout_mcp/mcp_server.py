@@ -87,3 +87,34 @@ def get_workout_by_date_range(start_date: str, end_date: str) -> list[dict[str, 
     """
     with get_db_session() as db:
         return _get_workout_by_date_range(db, start_date, end_date)
+
+
+def _get_workout_by_routine(db: Session, routine_name: str) -> list[dict[str, object]]:
+    """Core logic for get_workout_by_routine — testable with any session."""
+    from sqlalchemy import select
+
+    from workout_mcp.models import Routine
+
+    stmt = (
+        select(Workout)
+        .options(
+            joinedload(Workout.routine),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.exercise),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.sets),
+        )
+        .join(Workout.routine)
+        .filter(Routine.name == routine_name)
+        .order_by(Workout.start)
+    )
+    workouts = db.execute(stmt).unique().scalars().all()
+    return [_serialize_workout(w) for w in workouts]
+
+
+@mcp.tool()
+def get_workout_by_routine(routine_name: str) -> list[dict[str, object]]:
+    """Retrieve all workouts for a given routine name.
+
+    Returns full workout details including exercises and sets.
+    """
+    with get_db_session() as db:
+        return _get_workout_by_routine(db, routine_name)
