@@ -51,7 +51,7 @@ def client(db_session: Session) -> Generator[TestClient]:
     """Create a TestClient with the test database session injected."""
     from workout_mcp.api import app, get_db
 
-    def override_get_db() -> Generator[Session, None, None]:
+    def override_get_db() -> Generator[Session]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
