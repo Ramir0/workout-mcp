@@ -24,7 +24,7 @@ Compact reference for AI agents working in this repo.
 
 ## State of the Codebase
 
-- **Current state**: ORM models defined (`workout_mcp/models.py`) with unit tests (`tests/test_models.py`). Database infrastructure implemented: `workout_mcp/config.py`, `workout_mcp/database.py`, Alembic migrations (`alembic/`). Test infrastructure in place: `tests/conftest.py` (transaction-isolated fixtures), `tests/test_database.py` (integration tests). `main.py` is still a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema).
+- **Current state**: ORM models defined (`workout_mcp/models.py`) with unique constraints for upsert support. Database infrastructure implemented: `workout_mcp/config.py`, `workout_mcp/database.py`, Alembic migrations (`alembic/`). Hevy CSV parser implemented (`workout_mcp/parser.py`) with test fixtures and unit tests. Test infrastructure in place: `tests/conftest.py` (transaction-isolated fixtures), `tests/test_database.py` (integration tests), `tests/test_parser.py` (parser tests), `tests/fixtures/` (CSV test data). `main.py` is still a stub. The README describes the full intended architecture (REST API, MCP tools, DB schema). Issue #11 (REST API endpoint) is next.
 - Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
 - Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, `alembic.ini`, `docker-compose.yml`, `.env.example`.
 
