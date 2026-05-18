@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -18,7 +18,7 @@ class Routine(Base):
     __tablename__ = "routine"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
 
     workouts: Mapped[list[Workout]] = relationship(
         back_populates="routine", cascade="all, delete-orphan"
@@ -36,6 +36,8 @@ class Workout(Base):
     end: Mapped[datetime]
     routine_id: Mapped[int] = mapped_column(ForeignKey("routine.id"))
 
+    __table_args__ = (UniqueConstraint("routine_id", "start", "end"),)
+
     routine: Mapped[Routine] = relationship(back_populates="workouts")
     workout_exercises: Mapped[list[WorkoutExercise]] = relationship(
         back_populates="workout", cascade="all, delete-orphan"
@@ -49,7 +51,7 @@ class Exercise(Base):
     __tablename__ = "exercise"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
 
     workout_exercises: Mapped[list[WorkoutExercise]] = relationship(
         back_populates="exercise", cascade="all, delete-orphan"
@@ -66,6 +68,8 @@ class WorkoutExercise(Base):
     workout_id: Mapped[int] = mapped_column(ForeignKey("workout.id"))
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercise.id"))
     exercise_index: Mapped[int]
+
+    __table_args__ = (UniqueConstraint("workout_id", "exercise_id"),)
 
     workout: Mapped[Workout] = relationship(back_populates="workout_exercises")
     exercise: Mapped[Exercise] = relationship(back_populates="workout_exercises")
@@ -86,6 +90,8 @@ class Set(Base):
     reps: Mapped[int]
     weight: Mapped[float]
     rpe: Mapped[float | None] = mapped_column(default=None)
+
+    __table_args__ = (UniqueConstraint("workout_exercise_id", "set_index"),)
 
     workout_exercise: Mapped[WorkoutExercise] = relationship(back_populates="sets")
 
