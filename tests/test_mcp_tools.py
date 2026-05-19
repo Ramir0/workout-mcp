@@ -138,3 +138,29 @@ def test_get_workout_count_empty(db_session: Session) -> None:
     from workout_mcp.mcp_server import _get_workout_count
 
     assert _get_workout_count(db_session, start_date="2025-01-01", end_date="2025-01-31") == 0
+
+
+def test_get_last_workout(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_last_workout
+
+    result = _get_last_workout(db_session)
+    assert result["routine"] == "Push Day"
+    assert result["start"] == "2024-01-03T10:00:00"
+
+
+def test_get_last_workout_by_exercise(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_last_workout
+
+    result = _get_last_workout(db_session, exercise_name="Bench Press")
+    assert result["routine"] == "Push Day"
+    assert result["start"] == "2024-01-03T10:00:00"
+
+
+def test_get_last_workout_empty(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_last_workout
+
+    result = _get_last_workout(db_session, exercise_name="Nonexistent")
+    assert result == {}

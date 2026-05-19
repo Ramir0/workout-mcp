@@ -189,3 +189,43 @@ def get_workout_count(
     """
     with get_db_session() as db:
         return _get_workout_count(db, start_date, end_date, routine_name)
+
+
+def _get_last_workout(db: Session, exercise_name: str = "") -> dict[str, object]:
+    """Core logic for get_last_workout — testable with any session."""
+    from sqlalchemy import select
+
+    stmt = (
+        select(Workout)
+        .options(
+            joinedload(Workout.routine),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.exercise),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.sets),
+        )
+        .order_by(Workout.start.desc())
+    )
+
+    if exercise_name:
+        from workout_mcp.models import Exercise
+
+        stmt = (
+            stmt.join(Workout.workout_exercises)
+            .join(WorkoutExercise.exercise)
+            .filter(Exercise.name == exercise_name)
+        )
+
+    workout = db.execute(stmt).unique().scalars().first()
+    if workout is None:
+        return {}
+    return _serialize_workout(workout)
+
+
+@mcp.tool()
+def get_last_workout(exercise_name: str = "") -> dict[str, object]:
+    """Get the most recent workout, optionally filtered by exercise.
+
+    If an exercise name is provided, returns the most recent workout
+    containing that exercise. Returns an empty dict if no workouts found.
+    """
+    with get_db_session() as db:
+        return _get_last_workout(db, exercise_name)
