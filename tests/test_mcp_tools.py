@@ -156,6 +156,18 @@ def test_get_last_workout_by_exercise(db_session: Session) -> None:
     result = _get_last_workout(db_session, exercise_name="Bench Press")
     assert result["routine"] == "Push Day"
     assert result["start"] == "2024-01-03T10:00:00"
+    exercise_names = [e["name"] for e in result["exercises"]]  # type: ignore[attr-defined]
+    assert "Bench Press" in exercise_names
+
+
+def test_get_last_workout_by_exercise_not_most_recent(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_last_workout
+
+    result = _get_last_workout(db_session, exercise_name="Squat")
+    # Squat is only in Jan 1 workout, not Jan 3
+    assert result["routine"] == "Push Day"
+    assert result["start"] == "2024-01-01T10:00:00"
 
 
 def test_get_last_workout_empty(db_session: Session) -> None:

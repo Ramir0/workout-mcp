@@ -195,6 +195,8 @@ def _get_last_workout(db: Session, exercise_name: str = "") -> dict[str, object]
     """Core logic for get_last_workout — testable with any session."""
     from sqlalchemy import select
 
+    from workout_mcp.models import Exercise
+
     stmt = (
         select(Workout)
         .options(
@@ -206,8 +208,6 @@ def _get_last_workout(db: Session, exercise_name: str = "") -> dict[str, object]
     )
 
     if exercise_name:
-        from workout_mcp.models import Exercise
-
         stmt = (
             stmt.join(Workout.workout_exercises)
             .join(WorkoutExercise.exercise)
