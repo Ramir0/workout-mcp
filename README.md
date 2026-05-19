@@ -205,6 +205,18 @@ Once connected, you can ask your AI agent:
 - "When was the last time I did deadlifts?"
 - "What's my bench press PR?"
 
+#### Tool Details
+
+| Tool | Parameters | Returns |
+|------|-----------|---------|
+| `get_workout_by_date_range` | `start_date: str`, `end_date: str` (ISO format) | List of workouts with exercises and sets |
+| `get_workout_by_routine` | `routine_name: str` | List of workouts for that routine |
+| `get_workout_by_exercise` | `exercise_name: str` | List of workouts containing that exercise |
+| `get_workout_count` | `start_date?`, `end_date?`, `routine_name?` | Integer count |
+| `get_last_workout` | `exercise_name?` | Most recent workout (or empty dict) |
+| `get_max_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
+| `get_min_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
+
 ## Project Structure
 
 ```
