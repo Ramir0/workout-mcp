@@ -252,7 +252,10 @@ workout-mcp/
 │   ├── api.py                        # FastAPI app & REST endpoints
 │   ├── mcp_server.py                 # FastMCP server scaffold & tools
 │   └── parser.py                     # Hevy CSV export parser
+├── .dockerignore                        # Docker build exclusions
+├── Dockerfile                           # Production container build
 ├── docker-compose.yml                # PostgreSQL container for local development
+├── docker-compose.prod.yml           # Production: app + postgres
 ├── main.py                           # FastAPI server entry point
 ├── pyproject.toml                    # Project configuration
 ├── uv.lock                           # Locked dependencies
@@ -278,6 +281,37 @@ The MCP tools enable rich querying scenarios such as:
 - **Volume Analysis**: "How many sets did I do for bench press in January?"
 - **Routine Analysis**: "When was the last time I did the 'Upper Body' routine?"
 - **RPE Tracking**: "What's my average RPE for deadlifts?"
+
+## Docker Deployment
+
+### Production
+
+1. Set environment variables:
+```bash
+export DATABASE_USER=postgres
+export DATABASE_PASSWORD=<secure-password>
+```
+
+2. Run migrations:
+```bash
+docker compose -f docker-compose.prod.yml run --rm app uv run alembic upgrade head
+```
+
+3. Start all services:
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+4. Verify: `curl http://localhost:8000/mcp`
+
+The host's HTTP server should reverse proxy to `localhost:8000`.
+
+### Local Development
+
+```bash
+docker-compose up -d          # Start PostgreSQL
+python main.py                # Start server (REST API + MCP)
+```
 
 ## Development
 

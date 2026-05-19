@@ -176,3 +176,39 @@ def test_get_last_workout_empty(db_session: Session) -> None:
 
     result = _get_last_workout(db_session, exercise_name="Nonexistent")
     assert result == {}
+
+
+def test_get_max_pr_by_exercise(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_max_pr_by_exercise
+
+    result = _get_max_pr_by_exercise(db_session, "Bench Press")
+    assert result["weight"] == 120.0
+    assert result["reps"] == 3
+    assert "2024-01-03" in result["date"]  # type: ignore[operator]
+
+
+def test_get_max_pr_by_exercise_empty(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_max_pr_by_exercise
+
+    result = _get_max_pr_by_exercise(db_session, "Nonexistent")
+    assert result == {}
+
+
+def test_get_min_pr_by_exercise(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_min_pr_by_exercise
+
+    result = _get_min_pr_by_exercise(db_session, "Bench Press")
+    assert result["weight"] == 100.0
+    assert result["reps"] == 5
+    assert "2024-01-01" in result["date"]  # type: ignore[operator]
+
+
+def test_get_min_pr_by_exercise_empty(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_min_pr_by_exercise
+
+    result = _get_min_pr_by_exercise(db_session, "Nonexistent")
+    assert result == {}
