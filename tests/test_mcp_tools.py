@@ -121,3 +121,20 @@ def test_get_workout_by_exercise_empty(db_session: Session) -> None:
 
     results = _get_workout_by_exercise(db_session, "Curls")
     assert results == []
+
+
+def test_get_workout_count(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_workout_count
+
+    assert _get_workout_count(db_session) == 3
+    assert _get_workout_count(db_session, routine_name="Push Day") == 2
+    assert _get_workout_count(db_session, start_date="2024-01-02", end_date="2024-01-02") == 1
+    assert _get_workout_count(db_session, routine_name="Nonexistent") == 0
+
+
+def test_get_workout_count_empty(db_session: Session) -> None:
+    _seed_workouts(db_session)
+    from workout_mcp.mcp_server import _get_workout_count
+
+    assert _get_workout_count(db_session, start_date="2025-01-01", end_date="2025-01-31") == 0
