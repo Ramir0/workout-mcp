@@ -365,7 +365,7 @@ git commit -m "feat: add get_workout_by_exercise MCP tool"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add get_workout_count to mcp_server.py**
+- [x] **Step 1: Add get_workout_count to mcp_server.py**
 
 Append to `workout_mcp/mcp_server.py`:
 
@@ -377,17 +377,21 @@ def _get_workout_count(
     routine_name: str = "",
 ) -> int:
     """Core logic for get_workout_count — testable with any session."""
-    query = db.query(Workout)
+    from sqlalchemy import func, select
+
+    from workout_mcp.models import Routine
+
+    stmt = select(func.count()).select_from(Workout)
 
     if start_date:
-        query = query.filter(Workout.start >= datetime.fromisoformat(start_date))
+        stmt = stmt.filter(Workout.start >= datetime.fromisoformat(start_date))
     if end_date:
         end = datetime.fromisoformat(end_date).replace(hour=23, minute=59, second=59)
-        query = query.filter(Workout.start <= end)
+        stmt = stmt.filter(Workout.start <= end)
     if routine_name:
-        query = query.join(Routine).filter(Routine.name == routine_name)
+        stmt = stmt.join(Workout.routine).filter(Routine.name == routine_name)
 
-    return query.count()
+    return db.execute(stmt).scalar() or 0
 
 
 @mcp.tool()
@@ -398,19 +402,14 @@ def get_workout_count(
 ) -> int:
     """Get the total count of workouts, with optional filters.
 
-    Args:
-        start_date: Optional start date filter (ISO format YYYY-MM-DD).
-        end_date: Optional end date filter (ISO format YYYY-MM-DD).
-        routine_name: Optional routine name filter.
-
-    Returns:
-        Integer count of matching workouts.
+    Accepts optional date range and routine name filters. Returns the integer
+    count of matching workouts. Dates should be in ISO format (YYYY-MM-DD).
     """
     with get_db_session() as db:
         return _get_workout_count(db, start_date, end_date, routine_name)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
@@ -424,54 +423,52 @@ git commit -m "feat: add get_workout_count MCP tool"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add get_last_workout to mcp_server.py**
+- [x] **Step 1: Add get_last_workout to mcp_server.py**
 
 Append to `workout_mcp/mcp_server.py`:
 
 ```python
-def _get_last_workout(db: Session, exercise_name: str = "") -> dict:
+def _get_last_workout(db: Session, exercise_name: str = "") -> dict[str, object]:
     """Core logic for get_last_workout — testable with any session."""
-    query = (
-        db.query(Workout)
+    from sqlalchemy import select
+
+    from workout_mcp.models import Exercise
+
+    stmt = (
+        select(Workout)
         .options(
             joinedload(Workout.routine),
-            joinedload(Workout.workout_exercises)
-            .joinedload(WorkoutExercise.exercise),
-            joinedload(Workout.workout_exercises)
-            .joinedload(WorkoutExercise.sets),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.exercise),
+            joinedload(Workout.workout_exercises).joinedload(WorkoutExercise.sets),
         )
         .order_by(Workout.start.desc())
     )
 
     if exercise_name:
-        query = (
-            query.join(Workout.workout_exercises)
+        stmt = (
+            stmt.join(Workout.workout_exercises)
             .join(WorkoutExercise.exercise)
             .filter(Exercise.name == exercise_name)
         )
 
-    workout = query.unique().first()
+    workout = db.execute(stmt).unique().scalars().first()
     if workout is None:
         return {}
     return _serialize_workout(workout)
 
 
 @mcp.tool()
-def get_last_workout(exercise_name: str = "") -> dict:
+def get_last_workout(exercise_name: str = "") -> dict[str, object]:
     """Get the most recent workout, optionally filtered by exercise.
 
-    Args:
-        exercise_name: Optional exercise name filter. If provided, returns the
-            most recent workout containing this exercise.
-
-    Returns:
-        Workout detail dict, or empty dict if no workouts found.
+    If an exercise name is provided, returns the most recent workout
+    containing that exercise. Returns an empty dict if no workouts found.
     """
     with get_db_session() as db:
         return _get_last_workout(db, exercise_name)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
