@@ -150,3 +150,47 @@ def get_workout_by_exercise(exercise_name: str) -> list[dict[str, object]]:
     """
     with get_db_session() as db:
         return _get_workout_by_exercise(db, exercise_name)
+
+
+def _get_workout_count(
+    db: Session,
+    start_date: str = "",
+    end_date: str = "",
+    routine_name: str = "",
+) -> int:
+    """Core logic for get_workout_count — testable with any session."""
+    from sqlalchemy import func, select
+
+    stmt = select(func.count()).select_from(Workout)
+
+    if start_date:
+        stmt = stmt.filter(Workout.start >= datetime.fromisoformat(start_date))
+    if end_date:
+        end = datetime.fromisoformat(end_date).replace(hour=23, minute=59, second=59)
+        stmt = stmt.filter(Workout.start <= end)
+    if routine_name:
+        from workout_mcp.models import Routine
+
+        stmt = stmt.join(Workout.routine).filter(Routine.name == routine_name)
+
+    return db.execute(stmt).scalar() or 0
+
+
+@mcp.tool()
+def get_workout_count(
+    start_date: str = "",
+    end_date: str = "",
+    routine_name: str = "",
+) -> int:
+    """Get the total count of workouts, with optional filters.
+
+    Args:
+        start_date: Optional start date filter (ISO format YYYY-MM-DD).
+        end_date: Optional end date filter (ISO format YYYY-MM-DD).
+        routine_name: Optional routine name filter.
+
+    Returns:
+        Integer count of matching workouts.
+    """
+    with get_db_session() as db:
+        return _get_workout_count(db, start_date, end_date, routine_name)
