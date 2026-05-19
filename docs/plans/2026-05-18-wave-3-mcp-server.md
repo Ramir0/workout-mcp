@@ -181,7 +181,7 @@ git commit -m "feat: mount MCP server on FastAPI at /mcp with lifespan"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add get_workout_by_date_range to mcp_server.py**
+- [x] **Step 1: Add get_workout_by_date_range to mcp_server.py**
 
 Append to `workout_mcp/mcp_server.py`:
 
@@ -245,12 +245,12 @@ def get_workout_by_date_range(start_date: str, end_date: str) -> list[dict]:
         return _get_workout_by_date_range(db, start_date, end_date)
 ```
 
-- [ ] **Step 2: Run type checker**
+- [x] **Step 2: Run type checker**
 
 Run: `uv run mypy workout_mcp/mcp_server.py`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
@@ -264,7 +264,7 @@ git commit -m "feat: add get_workout_by_date_range MCP tool"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add get_workout_by_routine to mcp_server.py**
+- [x] **Step 1: Add get_workout_by_routine to mcp_server.py**
 
 Append to `workout_mcp/mcp_server.py`:
 
@@ -299,7 +299,7 @@ def get_workout_by_routine(routine_name: str) -> list[dict]:
         return _get_workout_by_routine(db, routine_name)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
@@ -313,7 +313,7 @@ git commit -m "feat: add get_workout_by_routine MCP tool"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add get_workout_by_exercise to mcp_server.py**
+- [x] **Step 1: Add get_workout_by_exercise to mcp_server.py**
 
 Append to `workout_mcp/mcp_server.py`:
 
@@ -349,7 +349,7 @@ def get_workout_by_exercise(exercise_name: str) -> list[dict]:
         return _get_workout_by_exercise(db, exercise_name)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
