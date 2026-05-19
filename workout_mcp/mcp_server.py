@@ -229,3 +229,139 @@ def get_last_workout(exercise_name: str = "") -> dict[str, object]:
     """
     with get_db_session() as db:
         return _get_last_workout(db, exercise_name)
+
+
+def _get_max_pr_by_exercise(db: Session, exercise_name: str) -> dict[str, object]:
+    """Core logic for get_max_pr_by_exercise — testable with any session."""
+    from sqlalchemy import func
+
+    from workout_mcp.models import Exercise, Set
+
+    best_per_workout = (
+        db.query(
+            Workout.start.label("workout_start"),
+            func.max(Set.weight).label("best_weight"),
+        )
+        .join(WorkoutExercise, WorkoutExercise.workout_id == Workout.id)
+        .join(Exercise, Exercise.id == WorkoutExercise.exercise_id)
+        .join(Set, Set.workout_exercise_id == WorkoutExercise.id)
+        .filter(Exercise.name == exercise_name)
+        .group_by(Workout.id, Workout.start)
+        .subquery()
+    )
+
+    result = db.query(best_per_workout).order_by(best_per_workout.c.best_weight.desc()).first()
+
+    if result is None:
+        return {}
+
+    pr_workout_start = result.workout_start
+    pr_weight = result.best_weight
+
+    pr_set = (
+        db.query(Set)
+        .join(WorkoutExercise, WorkoutExercise.id == Set.workout_exercise_id)
+        .join(Workout, Workout.id == WorkoutExercise.workout_id)
+        .join(Exercise, Exercise.id == WorkoutExercise.exercise_id)
+        .filter(
+            Exercise.name == exercise_name,
+            Workout.start == pr_workout_start,
+            Set.weight == pr_weight,
+        )
+        .order_by(Set.reps.desc())
+        .first()
+    )
+
+    if pr_set is None:
+        return {}
+
+    return {
+        "date": pr_workout_start.isoformat(),
+        "weight": pr_set.weight,
+        "reps": pr_set.reps,
+    }
+
+
+@mcp.tool()
+def get_max_pr_by_exercise(exercise_name: str) -> dict[str, object]:
+    """Get the maximum personal record (heaviest best-set weight) for an exercise.
+
+    For each workout containing this exercise, the "best set" is the single heaviest
+    set. The PR is the heaviest best-set weight across all workouts.
+
+    Args:
+        exercise_name: Name of the exercise (e.g., "Bench Press").
+
+    Returns:
+        Dict with "date", "weight", and "reps" of the PR, or empty dict if no data.
+    """
+    with get_db_session() as db:
+        return _get_max_pr_by_exercise(db, exercise_name)
+
+
+def _get_min_pr_by_exercise(db: Session, exercise_name: str) -> dict[str, object]:
+    """Core logic for get_min_pr_by_exercise — testable with any session."""
+    from sqlalchemy import func
+
+    from workout_mcp.models import Exercise, Set
+
+    best_per_workout = (
+        db.query(
+            Workout.start.label("workout_start"),
+            func.max(Set.weight).label("best_weight"),
+        )
+        .join(WorkoutExercise, WorkoutExercise.workout_id == Workout.id)
+        .join(Exercise, Exercise.id == WorkoutExercise.exercise_id)
+        .join(Set, Set.workout_exercise_id == WorkoutExercise.id)
+        .filter(Exercise.name == exercise_name)
+        .group_by(Workout.id, Workout.start)
+        .subquery()
+    )
+
+    result = db.query(best_per_workout).order_by(best_per_workout.c.best_weight.asc()).first()
+
+    if result is None:
+        return {}
+
+    pr_workout_start = result.workout_start
+    pr_weight = result.best_weight
+
+    pr_set = (
+        db.query(Set)
+        .join(WorkoutExercise, WorkoutExercise.id == Set.workout_exercise_id)
+        .join(Workout, Workout.id == WorkoutExercise.workout_id)
+        .join(Exercise, Exercise.id == WorkoutExercise.exercise_id)
+        .filter(
+            Exercise.name == exercise_name,
+            Workout.start == pr_workout_start,
+            Set.weight == pr_weight,
+        )
+        .order_by(Set.reps.desc())
+        .first()
+    )
+
+    if pr_set is None:
+        return {}
+
+    return {
+        "date": pr_workout_start.isoformat(),
+        "weight": pr_set.weight,
+        "reps": pr_set.reps,
+    }
+
+
+@mcp.tool()
+def get_min_pr_by_exercise(exercise_name: str) -> dict[str, object]:
+    """Get the minimum personal record (lightest best-set weight) for an exercise.
+
+    For each workout containing this exercise, the "best set" is the single heaviest
+    set. The PR is the lightest best-set weight across all workouts.
+
+    Args:
+        exercise_name: Name of the exercise (e.g., "Bench Press").
+
+    Returns:
+        Dict with "date", "weight", and "reps" of the PR, or empty dict if no data.
+    """
+    with get_db_session() as db:
+        return _get_min_pr_by_exercise(db, exercise_name)
