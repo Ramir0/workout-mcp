@@ -252,7 +252,10 @@ workout-mcp/
 │   ├── api.py                        # FastAPI app & REST endpoints
 │   ├── mcp_server.py                 # FastMCP server scaffold & tools
 │   └── parser.py                     # Hevy CSV export parser
+├── .dockerignore                        # Docker build exclusions
+├── Dockerfile                           # Production container build
 ├── docker-compose.yml                # PostgreSQL container for local development
+├── docker-compose.prod.yml           # Production: app + postgres
 ├── main.py                           # FastAPI server entry point
 ├── pyproject.toml                    # Project configuration
 ├── uv.lock                           # Locked dependencies

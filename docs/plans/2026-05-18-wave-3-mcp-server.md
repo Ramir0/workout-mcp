@@ -89,7 +89,7 @@ def get_db_session() -> Generator[Session]:
         session.close()
 ```
 
-- [ ] **Step 2: Run type checker**
+- [x] **Step 2: Run type checker**
 
 Run: `uv run mypy workout_mcp/mcp_server.py`
 Expected: PASS
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Verify FastAPI still starts (no tools yet, but mount should work)**
+- [x] **Step 2: Verify FastAPI still starts (no tools yet, but mount should work)**
 
 Run: `python main.py` (Ctrl+C after confirming startup)
 Expected: Server starts on port 8000 without errors.
@@ -484,7 +484,7 @@ git commit -m "feat: add get_last_workout MCP tool"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add get_max_pr_by_exercise to mcp_server.py**
+- [x] **Step 1: Add get_max_pr_by_exercise to mcp_server.py**
 
 Append to `workout_mcp/mcp_server.py`:
 
@@ -560,7 +560,7 @@ def get_max_pr_by_exercise(exercise_name: str) -> dict:
         return _get_max_pr_by_exercise(db, exercise_name)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
@@ -574,7 +574,7 @@ git commit -m "feat: add get_max_pr_by_exercise MCP tool"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add get_min_pr_by_exercise to mcp_server.py**
+- [x] **Step 1: Add get_min_pr_by_exercise to mcp_server.py**
 
 Append to `workout_mcp/mcp_server.py`:
 
@@ -650,7 +650,7 @@ def get_min_pr_by_exercise(exercise_name: str) -> dict:
         return _get_min_pr_by_exercise(db, exercise_name)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py
@@ -666,7 +666,7 @@ git commit -m "feat: add get_min_pr_by_exercise MCP tool"
 **Files:**
 - Create: `tests/test_mcp_tools.py`
 
-- [ ] **Step 1: Create test file with fixtures and all tool tests**
+- [x] **Step 1: Create test file with fixtures and all tool tests**
 
 Create `tests/test_mcp_tools.py`:
 
@@ -855,12 +855,12 @@ def test_get_min_pr_by_exercise_empty(db_session: Session) -> None:
     assert result == {}
 ```
 
-- [ ] **Step 2: Run MCP tool tests**
+- [x] **Step 2: Run MCP tool tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_mcp_tools.py -v`
-Expected: All 15 tests PASS.
+Expected: All 17 tests PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_mcp_tools.py
@@ -877,7 +877,7 @@ git commit -m "test: add MCP tool integration tests for all 7 tools"
 - Create: `Dockerfile`
 - Create: `.dockerignore`
 
-- [ ] **Step 1: Create .dockerignore**
+- [x] **Step 1: Create .dockerignore**
 
 Create `.dockerignore`:
 
@@ -897,7 +897,7 @@ dist/
 build/
 ```
 
-- [ ] **Step 2: Create multi-stage Dockerfile**
+- [x] **Step 2: Create multi-stage Dockerfile**
 
 Create `Dockerfile`:
 
@@ -922,17 +922,18 @@ EXPOSE 8000
 CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-- [ ] **Step 3: Test Docker build**
+- [x] **Step 3: Test Docker build**
 
 Run: `docker build -t workout-mcp .`
 Expected: Build succeeds.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Dockerfile .dockerignore
 git commit -m "feat: add Dockerfile and .dockerignore for production container"
 ```
+
 
 ---
 
@@ -941,7 +942,7 @@ git commit -m "feat: add Dockerfile and .dockerignore for production container"
 **Files:**
 - Create: `docker-compose.prod.yml`
 
-- [ ] **Step 1: Create production compose file**
+- [x] **Step 1: Create production compose file**
 
 Create `docker-compose.prod.yml`:
 
@@ -977,7 +978,7 @@ volumes:
   postgres_data:
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docker-compose.prod.yml
@@ -991,7 +992,7 @@ git commit -m "feat: add production docker-compose with app and postgres"
 **Files:**
 - Modify: `.env.example`
 
-- [ ] **Step 1: Add production variables**
+- [x] **Step 1: Add production variables**
 
 Replace `.env.example` with:
 
@@ -1006,7 +1007,7 @@ TEST_DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@localhost:5
 APP_PORT=8000
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add .env.example
@@ -1022,7 +1023,7 @@ git commit -m "docs: add APP_PORT to .env.example"
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Update README MCP Configuration section**
+- [x] **Step 1: Update README MCP Configuration section**
 
 Replace the "### MCP Configuration" section with:
 
@@ -1052,7 +1053,7 @@ Once connected, you can ask your AI agent:
 - "What's my bench press PR?"
 ```
 
-- [ ] **Step 2: Add Docker Deployment section**
+- [x] **Step 2: Add Docker Deployment section**
 
 Add before the "Development" section:
 
@@ -1089,7 +1090,7 @@ python main.py                # Start server (REST API + MCP)
 ```
 ```
 
-- [ ] **Step 3: Add MCP Tools reference table**
+- [x] **Step 3: Add MCP Tools reference table**
 
 Add after the existing "MCP Tools for AI Agents" table:
 
@@ -1107,7 +1108,7 @@ Add after the existing "MCP Tools for AI Agents" table:
 | `get_min_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md
@@ -1122,27 +1123,27 @@ git commit -m "docs: update README with MCP remote config, Docker deployment, an
 
 **Files:** None
 
-- [ ] **Step 1: Run all tests**
+- [x] **Step 1: Run all tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest -v`
-Expected: All tests PASS (7 model + 4 database + 10 parser + 6 API + 15 MCP tools = 42 total).
+Expected: All tests PASS (7 model + 4 database + 10 parser + 6 API + 17 MCP tools = 44 total).
 
-- [ ] **Step 2: Run linter**
+- [x] **Step 2: Run linter**
 
 Run: `uv run ruff check .`
 Expected: PASS
 
-- [ ] **Step 3: Run type checker**
+- [x] **Step 3: Run type checker**
 
 Run: `uv run mypy .`
 Expected: PASS
 
-- [ ] **Step 4: Run pre-commit**
+- [x] **Step 4: Run pre-commit**
 
 Run: `uv run pre-commit run --all-files`
 Expected: All hooks PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git commit -m "chore: verify all tests and tooling pass for Wave 3"
