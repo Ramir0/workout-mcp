@@ -279,6 +279,37 @@ The MCP tools enable rich querying scenarios such as:
 - **Routine Analysis**: "When was the last time I did the 'Upper Body' routine?"
 - **RPE Tracking**: "What's my average RPE for deadlifts?"
 
+## Docker Deployment
+
+### Production
+
+1. Set environment variables:
+```bash
+export DATABASE_USER=postgres
+export DATABASE_PASSWORD=<secure-password>
+```
+
+2. Run migrations:
+```bash
+docker compose -f docker-compose.prod.yml run --rm app uv run alembic upgrade head
+```
+
+3. Start all services:
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+4. Verify: `curl http://localhost:8000/mcp`
+
+The host's HTTP server should reverse proxy to `localhost:8000`.
+
+### Local Development
+
+```bash
+docker-compose up -d          # Start PostgreSQL
+python main.py                # Start server (REST API + MCP)
+```
+
 ## Development
 
 ### Tooling
