@@ -1,5 +1,7 @@
 """Tests for workout_mcp.config module."""
 
+from __future__ import annotations
+
 import importlib
 import os
 from unittest.mock import patch
