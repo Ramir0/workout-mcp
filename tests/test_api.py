@@ -54,8 +54,7 @@ def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
     assert data["created"]["workout_exercises"] == 0
     assert data["created"]["sets"] == 0
     assert data["discarded"]["sets"] == 4
-    assert len(data["warnings"]) == 4
-    assert all("already exists" in w["reason"] for w in data["warnings"])
+    assert data["warnings"] == []
 
     # Database must not have doubled
     assert db_session.query(Routine).count() == 2
@@ -117,7 +116,7 @@ def test_import_csv_discards_existing_set(client: TestClient, db_session: Sessio
     data = response.json()
     assert data["created"]["workouts"] == 0
     assert data["discarded"]["sets"] == 4
-    assert len(data["warnings"]) == 4
+    assert data["warnings"] == []
 
     # Original weight must be preserved (not updated) - set was discarded
     bench = db_session.query(Exercise).filter_by(name="Bench Press").first()

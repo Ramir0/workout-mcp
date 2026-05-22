@@ -200,12 +200,6 @@ def import_csv(
                             sets_created += 1
                         else:
                             sets_discarded += 1
-                            warnings.append(
-                                {
-                                    "row": str(parsed_set.source_row),
-                                    "reason": f"Set index {parsed_set.set_index} already exists for {parsed_exercise.name}",
-                                }
-                            )
 
         db.commit()
     except SQLAlchemyError as exc:
