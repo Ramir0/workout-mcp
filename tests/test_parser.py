@@ -96,17 +96,22 @@ def test_malformed_date() -> None:
 def test_negative_weight() -> None:
     with (
         open(FIXTURES_DIR / "invalid_weight.csv", encoding="utf-8") as f,
-        pytest.raises(InvalidValueError, match="positive"),
+        pytest.raises(InvalidValueError, match="non-negative"),
     ):
         parse_hevy_csv(f)
 
 
 def test_weight_without_reps() -> None:
-    with (
-        open(FIXTURES_DIR / "weight_without_reps.csv", encoding="utf-8") as f,
-        pytest.raises(InvalidValueError, match="both be present"),
-    ):
-        parse_hevy_csv(f)
+    """Weight present without reps is valid (at least one metric)."""
+    with open(FIXTURES_DIR / "weight_without_reps.csv", encoding="utf-8") as f:
+        routines = parse_hevy_csv(f)
+
+    assert len(routines) == 1
+    set_ = routines[0].workouts[0].exercises[0].sets[0]
+    assert set_.weight == 100.0
+    assert set_.reps is None
+    assert set_.distance_km is None
+    assert set_.duration_seconds is None
 
 
 def test_cardio_row() -> None:
@@ -115,20 +120,24 @@ def test_cardio_row() -> None:
 
     assert len(routines) == 1
     set_ = routines[0].workouts[0].exercises[0].sets[0]
-    assert set_.weight == 0.0
-    assert set_.reps == 0
+    assert set_.weight is None
+    assert set_.reps is None
+    assert set_.distance_km == 0.5
+    assert set_.duration_seconds == 600
     assert set_.rpe is None
 
 
 def test_treadmill_weight_empty_reps_zero() -> None:
-    """Weight empty with reps=0 (treadmill) should be treated as cardio."""
+    """Weight empty with reps=0 and distance/duration present."""
     with open(FIXTURES_DIR / "treadmill.csv", encoding="utf-8") as f:
         routines = parse_hevy_csv(f)
 
     assert len(routines) == 1
     set_ = routines[0].workouts[0].exercises[0].sets[0]
-    assert set_.weight == 0.0
+    assert set_.weight is None
     assert set_.reps == 0
+    assert set_.distance_km == 0.7
+    assert set_.duration_seconds == 600
 
 
 def test_exercise_order_preserved() -> None:
@@ -150,3 +159,40 @@ def test_exercise_order_preserved() -> None:
     assert exercises[1].name == "C"
     assert exercises[1].exercise_index == 1
     assert len(exercises[0].sets) == 2
+
+
+def test_hybrid_exercise() -> None:
+    """Same exercise with both strength and cardio sets."""
+    with open(FIXTURES_DIR / "hybrid.csv", encoding="utf-8") as f:
+        routines = parse_hevy_csv(f)
+
+    assert len(routines) == 1
+    sets = routines[0].workouts[0].exercises[0].sets
+    assert len(sets) == 2
+    assert sets[0].weight == 20.0
+    assert sets[0].reps == 5
+    assert sets[0].distance_km is None
+    assert sets[0].duration_seconds is None
+    assert sets[1].weight is None
+    assert sets[1].reps is None
+    assert sets[1].distance_km == 2.0
+    assert sets[1].duration_seconds == 600
+
+
+def test_all_empty_metrics_error() -> None:
+    """Row with no metrics at all should raise InvalidValueError."""
+    with (
+        open(FIXTURES_DIR / "all_empty_metrics.csv", encoding="utf-8") as f,
+        pytest.raises(InvalidValueError, match="At least one"),
+    ):
+        parse_hevy_csv(f)
+
+
+def test_distance_and_duration_parsed() -> None:
+    """Parser should capture distance_km and duration_seconds."""
+    with open(FIXTURES_DIR / "cardio_only.csv", encoding="utf-8") as f:
+        routines = parse_hevy_csv(f)
+
+    set_ = routines[0].workouts[0].exercises[0].sets[0]
+    assert set_.distance_km == 5.0
+    assert set_.duration_seconds == 1800

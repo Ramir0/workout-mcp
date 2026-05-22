@@ -11,9 +11,11 @@ from typing import TextIO
 @dataclass
 class ParsedSet:
     set_index: int
-    reps: int
-    weight: float
+    reps: int | None
+    weight: float | None
     rpe: float | None
+    distance_km: float | None
+    duration_seconds: float | None
     source_row: int  # CSV row number (1-indexed, including header)
 
 
@@ -100,6 +102,16 @@ def _parse_optional_float(value: str, field: str) -> float | None:
         raise InvalidValueError(f"{field} must be a number or empty, got: {stripped!r}") from exc
 
 
+def _parse_optional_int(value: str, field: str) -> int | None:
+    stripped = value.strip()
+    if not stripped:
+        return None
+    try:
+        return int(stripped)
+    except ValueError as exc:
+        raise InvalidValueError(f"{field} must be an integer or empty, got: {stripped!r}") from exc
+
+
 def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
     """Parse a Hevy CSV export into a nested workout structure."""
     reader = csv.DictReader(source)
@@ -157,22 +169,30 @@ def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
             for row in ex_rows:
                 set_index = _parse_int(row["set_index"], "set_index")
 
-                weight_raw = row.get("weight_kg", "").strip()
-                reps_raw = row.get("reps", "").strip()
+                weight = _parse_optional_float(row.get("weight_kg", ""), "weight_kg")
+                reps = _parse_optional_int(row.get("reps", ""), "reps")
+                distance_km = _parse_optional_float(row.get("distance_km", ""), "distance_km")
+                duration_seconds_raw = row.get("duration_seconds", "").strip()
+                duration_seconds = (
+                    _parse_optional_float(duration_seconds_raw, "duration_seconds")
+                    if duration_seconds_raw != "0"
+                    else None
+                )
 
-                if weight_raw and reps_raw:
-                    weight = _parse_float(weight_raw, "weight_kg")
-                    reps = _parse_int(reps_raw, "reps")
-                    if weight <= 0:
-                        raise InvalidValueError(f"weight_kg must be positive, got {weight}")
-                    if reps <= 0:
-                        raise InvalidValueError(f"reps must be positive, got {reps}")
-                elif not weight_raw and (not reps_raw or reps_raw == "0"):
-                    weight = 0.0
-                    reps = 0
-                else:
+                if all(v is None for v in (weight, reps, distance_km, duration_seconds)):
                     raise InvalidValueError(
-                        "weight_kg and reps must both be present or both be empty"
+                        "At least one of weight_kg, reps, distance_km, or duration_seconds must be provided"
+                    )
+
+                if weight is not None and weight < 0:
+                    raise InvalidValueError(f"weight_kg must be non-negative, got {weight}")
+                if reps is not None and reps < 0:
+                    raise InvalidValueError(f"reps must be non-negative, got {reps}")
+                if distance_km is not None and distance_km < 0:
+                    raise InvalidValueError(f"distance_km must be non-negative, got {distance_km}")
+                if duration_seconds is not None and duration_seconds < 0:
+                    raise InvalidValueError(
+                        f"duration_seconds must be non-negative, got {duration_seconds}"
                     )
 
                 rpe = _parse_optional_float(row.get("rpe", ""), "rpe")
@@ -185,6 +205,8 @@ def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
                         reps=reps,
                         weight=weight,
                         rpe=rpe,
+                        distance_km=distance_km,
+                        duration_seconds=duration_seconds,
                         source_row=int(row["_row_num"]),
                     )
                 )
