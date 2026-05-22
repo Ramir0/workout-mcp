@@ -66,7 +66,10 @@ def test_parse_from_string_io() -> None:
     )
     routines = parse_hevy_csv(io.StringIO(csv_text))
     assert len(routines) == 1
-    assert routines[0].workouts[0].exercises[0].sets[0].rpe is None
+    set_ = routines[0].workouts[0].exercises[0].sets[0]
+    assert set_.rpe is None
+    assert set_.distance_km is None
+    assert set_.duration_seconds is None
 
 
 def test_empty_csv() -> None:
@@ -146,11 +149,11 @@ def test_exercise_order_preserved() -> None:
         '"superset_id","exercise_notes","set_index","set_type","weight_kg",'
         '"reps","distance_km","duration_seconds","rpe"\n'
         '"A","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","B",'
-        '"","",0,"normal",10,1,,0,\n'
+        '"","",0,"normal",10,1,,,\n'
         '"A","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","C",'
-        '"","",0,"normal",20,2,,0,\n'
+        '"","",0,"normal",20,2,,,\n'
         '"A","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","B",'
-        '"","",1,"normal",15,1,,0,\n'
+        '"","",1,"normal",15,1,,,\n'
     )
     routines = parse_hevy_csv(io.StringIO(csv_text))
     exercises = routines[0].workouts[0].exercises
@@ -196,3 +199,27 @@ def test_distance_and_duration_parsed() -> None:
     set_ = routines[0].workouts[0].exercises[0].sets[0]
     assert set_.distance_km == 5.0
     assert set_.duration_seconds == 1800
+
+
+def test_negative_distance() -> None:
+    csv_text = (
+        '"title","start_time","end_time","description","exercise_title",'
+        '"superset_id","exercise_notes","set_index","set_type","weight_kg",'
+        '"reps","distance_km","duration_seconds","rpe"\n'
+        '"Run","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Run",'
+        '"","",0,"normal",,,-1,,\n'
+    )
+    with pytest.raises(InvalidValueError, match="distance_km must be non-negative"):
+        parse_hevy_csv(io.StringIO(csv_text))
+
+
+def test_negative_duration() -> None:
+    csv_text = (
+        '"title","start_time","end_time","description","exercise_title",'
+        '"superset_id","exercise_notes","set_index","set_type","weight_kg",'
+        '"reps","distance_km","duration_seconds","rpe"\n'
+        '"Run","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Run",'
+        '"","",0,"normal",,,,-1,\n'
+    )
+    with pytest.raises(InvalidValueError, match="duration_seconds must be non-negative"):
+        parse_hevy_csv(io.StringIO(csv_text))

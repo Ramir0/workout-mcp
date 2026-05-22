@@ -173,6 +173,8 @@ def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
                 reps = _parse_optional_int(row.get("reps", ""), "reps")
                 distance_km = _parse_optional_float(row.get("distance_km", ""), "distance_km")
                 duration_seconds_raw = row.get("duration_seconds", "").strip()
+                # Hevy CSV exports write "0" for duration_seconds on non-cardio sets;
+                # treat this placeholder as absent rather than zero seconds.
                 duration_seconds = (
                     _parse_optional_float(duration_seconds_raw, "duration_seconds")
                     if duration_seconds_raw != "0"
