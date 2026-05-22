@@ -114,8 +114,8 @@ erDiagram
 │  ┌──────────────────────┐    ┌──────────────────────────┐   │
 │  │    /mcp (FastMCP)    │    │    REST API Endpoints    │   │
 │  │ - Query tools        │    │ - POST /import/csv       │   │
-│  │ - Error handling         │    │ - Data validation        │   │
-│  │ - PR calculations        │    │ - Exception handlers     │   │
+│  │ - Error handling     │    │ - Data validation        │   │
+│  │ - PR calculations    │    │ - Exception handlers     │   │
 │  └──────────────────────┘    └──────────────────────────┘   │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │        Relational Database (PostgreSQL)                │ │
