@@ -239,6 +239,16 @@ Once connected via MCP, you can ask questions like:
 | `get_max_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
 | `get_min_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
 
+### Query Capabilities
+
+The MCP tools enable rich querying scenarios such as:
+
+- **Training History**: "Show me all chest workouts from last month"
+- **Progress Tracking**: "What's my heaviest squat this year?"
+- **Volume Analysis**: "How many sets did I do for bench press in January?"
+- **Routine Analysis**: "When was the last time I did the 'Upper Body' routine?"
+- **RPE Tracking**: "What's my average RPE for deadlifts?"
+
 ## Environment Variables
 
 All settings are managed via `pydantic-settings` with `.env` file auto-loading.
