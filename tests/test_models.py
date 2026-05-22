@@ -41,6 +41,29 @@ def test_set_optional_rpe() -> None:
     assert set_.rpe is None
 
 
+def test_set_optional_weight_reps() -> None:
+    set_ = Set(set_index=1, reps=10, weight=None, rpe=8.0)
+    assert set_.reps == 10
+    assert set_.weight is None
+
+
+def test_set_with_distance_duration() -> None:
+    set_ = Set(set_index=1, distance_km=5.0, duration_seconds=1200)
+    assert set_.distance_km == 5.0
+    assert set_.duration_seconds == 1200
+    assert set_.reps is None
+    assert set_.weight is None
+
+
+def test_set_all_fields_none_except_index() -> None:
+    set_ = Set(set_index=1)
+    assert set_.reps is None
+    assert set_.weight is None
+    assert set_.distance_km is None
+    assert set_.duration_seconds is None
+    assert set_.rpe is None
+
+
 def test_routine_repr() -> None:
     routine = Routine(id=1, name="Push Day")
     rep = repr(routine)
