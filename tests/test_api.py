@@ -135,3 +135,61 @@ def test_import_invalid_multipart(client: TestClient) -> None:
     """Missing file field returns 422."""
     response = client.post("/import/csv")
     assert response.status_code == 422
+
+
+def test_request_middleware_adds_request_id(client: TestClient) -> None:
+    """Request logging middleware adds X-Request-ID header."""
+    import io
+
+    response = client.post(
+        "/import/csv",
+        files={"file": ("test.csv", io.BytesIO(b"title:,Workout 1"), "text/csv")},
+    )
+    assert "X-Request-ID" in response.headers
+
+
+def test_generic_exception_handler_returns_500() -> None:
+    """Generic exception handler returns 500 for unhandled errors."""
+    import io
+    from unittest.mock import patch
+
+    from fastapi.testclient import TestClient
+
+    from workout_mcp.api import app
+
+    client = TestClient(app, raise_server_exceptions=False)
+    with patch("workout_mcp.api.parse_hevy_csv", side_effect=RuntimeError("Boom")):
+        response = client.post(
+            "/import/csv",
+            files={"file": ("test.csv", io.BytesIO(b"some,valid,utf8,content"), "text/csv")},
+        )
+        assert response.status_code == 500
+        assert "Internal server error" in response.json()["detail"]
+
+
+def test_import_csv_updates_exercise_index(client: TestClient) -> None:
+    """Re-importing with changed exercise order updates exercise_index."""
+    import io
+    from pathlib import Path
+
+    fixtures_dir = Path(__file__).parent / "fixtures"
+
+    # Initial import
+    with open(fixtures_dir / "sample_hevy.csv", "rb") as f:
+        client.post("/import/csv", files={"file": ("sample_hevy.csv", f)})
+
+    # Second import with swapped exercise order: Squat (index 0), Bench Press (index 1)
+    header = '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n'
+    lines = (
+        '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Squat","","",0,"normal",140,5,,0,9\n'
+        '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Bench Press","","",0,"normal",100,5,,0,8\n'
+        '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Bench Press","","",1,"normal",100,5,,0,8.5\n'
+    )
+    response = client.post(
+        "/import/csv",
+        files={"file": ("swapped.csv", io.BytesIO((header + lines).encode("utf-8")), "text/csv")},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created"]["workout_exercises"] == 0
+    assert data["created"]["workouts"] == 0
