@@ -184,29 +184,48 @@ curl -X POST http://localhost:8000/import/csv \
   -F "file=@hevy_export.csv"
 ```
 
-### MCP Configuration
+### MCP Client Configuration
 
-The MCP server uses streamable HTTP transport, mounted on FastAPI at `/mcp`. Connect your MCP client to:
+#### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "workout": {
-      "url": "https://workout.amir-aranibar.com/mcp"
+      "url": "http://localhost:8000/mcp"
     }
   }
 }
 ```
 
-#### Example Queries
+#### Continue
 
-Once connected, you can ask your AI agent:
+Add to `.continue/config.yaml`:
 
-- "Show me all chest workouts from last month"
-- "What's my heaviest squat this year?"
-- "How many workouts did I do this week?"
-- "When was the last time I did deadlifts?"
-- "What's my bench press PR?"
+```yaml
+mcpServers:
+  - name: workout
+    url: http://localhost:8000/mcp
+```
+
+#### Generic MCP Client
+
+Any MCP-compatible client can connect to `http://localhost:8000/mcp` using streamable HTTP transport.
+
+### Example Queries
+
+Once connected via MCP, you can ask questions like:
+
+| Natural Language Query | MCP Tool Called |
+|------------------------|-----------------|
+| "Show me all chest workouts from last month" | `get_workout_by_exercise("Chest Press")` |
+| "What's my heaviest squat this year?" | `get_max_pr_by_exercise("Squat")` |
+| "How many workouts did I do this week?" | `get_workout_count(start_date="2026-05-12", end_date="2026-05-19")` |
+| "What was my last workout?" | `get_last_workout()` |
+| "Show me all PPL routine workouts" | `get_workout_by_routine("PPL")` |
+| "What's my lightest bench press PR?" | `get_min_pr_by_exercise("Bench Press")` |
 
 #### Tool Details
 
@@ -219,6 +238,16 @@ Once connected, you can ask your AI agent:
 | `get_last_workout` | `exercise_name?` | Most recent workout (or empty dict) |
 | `get_max_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
 | `get_min_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
+
+### Query Capabilities
+
+The MCP tools enable rich querying scenarios such as:
+
+- **Training History**: "Show me all chest workouts from last month"
+- **Progress Tracking**: "What's my heaviest squat this year?"
+- **Volume Analysis**: "How many sets did I do for bench press in January?"
+- **Routine Analysis**: "When was the last time I did the 'Upper Body' routine?"
+- **RPE Tracking**: "What's my average RPE for deadlifts?"
 
 ## Environment Variables
 
@@ -292,16 +321,6 @@ workout-mcp/
 2. **Storage**: Data is persisted in the relational schema (Routine -> Workout -> Exercise -> Set) via the REST API
 3. **Query**: MCP tools provide filtered access to workout history
 4. **Analysis**: AI agents can calculate trends, PRs, volume, and training patterns
-
-## Query Capabilities
-
-The MCP tools enable rich querying scenarios such as:
-
-- **Training History**: "Show me all chest workouts from last month"
-- **Progress Tracking**: "What's my heaviest squat this year?"
-- **Volume Analysis**: "How many sets did I do for bench press in January?"
-- **Routine Analysis**: "When was the last time I did the 'Upper Body' routine?"
-- **RPE Tracking**: "What's my average RPE for deadlifts?"
 
 ## Docker Deployment
 
