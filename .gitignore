@@ -15,3 +15,7 @@ data/
 
 # Project-specific tools
 .codegraph/
+
+# Test artifacts
+.coverage
+htmlcov/
