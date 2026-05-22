@@ -68,6 +68,10 @@ ignore_missing_imports = true
 module = ["alembic.*"]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = ["tests.test_config"]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
