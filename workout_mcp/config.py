@@ -10,7 +10,8 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql://postgres:postgres@localhost:5432/workout_mcp"
     test_database_url: str = "postgresql://postgres:postgres@localhost:5432/workout_mcp_test"
-    app_port: int = 8000
+    app_port: int = 9090
+    mcp_port: int = 9091
     log_level: str = "INFO"
     log_format: str = "console"  # "console" or "json"
 

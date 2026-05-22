@@ -13,6 +13,8 @@ COPY . .
 RUN useradd --create-home appuser
 USER appuser
 
-EXPOSE 8000
+EXPOSE 9090
+EXPOSE 9091
 
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default: run REST API. Override CMD for MCP server.
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9090"]

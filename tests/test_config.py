@@ -53,3 +53,11 @@ def test_test_database_url_env_override() -> None:
     finally:
         importlib.reload(workout_mcp.config)
         assert original == workout_mcp.config.TEST_DATABASE_URL
+
+
+def test_mcp_port_setting() -> None:
+    """Settings includes mcp_port with default 9091."""
+    from workout_mcp.config import Settings
+
+    settings = Settings()
+    assert settings.mcp_port == 9091

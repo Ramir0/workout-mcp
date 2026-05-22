@@ -22,6 +22,10 @@ mcp = FastMCP(
     json_response=True,
 )
 
+# Configure MCP to serve at the mount point root (no nested /mcp path).
+# Must be "/" (not "") — Starlette's Route constructor asserts path.startswith("/").
+mcp.settings.streamable_http_path = "/"
+
 
 @contextmanager
 def get_db_session() -> Generator[Session]:
