@@ -72,7 +72,7 @@ git commit -m "feat: add pytest-cov configuration with 90% threshold"
 **Files:**
 - Create: `tests/test_config.py`
 
-- [ ] **Step 1: Write config tests**
+- [x] **Step 1: Write config tests**
 
 ```python
 """Tests for workout_mcp.config module."""
@@ -124,7 +124,7 @@ def test_settings_invalid_port() -> None:
             Settings()
 ```
 
-- [ ] **Step 2: Run tests**
+- [x] **Step 2: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_config.py -v`
 Expected: All 3 tests PASS
@@ -143,7 +143,7 @@ git commit -m "test: add config module tests"
 **Files:**
 - Create: `tests/test_main.py`
 
-- [ ] **Step 1: Write main module tests**
+- [x] **Step 1: Write main module tests**
 
 ```python
 """Tests for main.py — app mounting and lifespan."""
@@ -179,7 +179,7 @@ def test_health_endpoint() -> None:
     assert response.status_code == 422
 ```
 
-- [ ] **Step 2: Run tests**
+- [x] **Step 2: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_main.py -v`
 Expected: All 3 tests PASS
@@ -198,7 +198,7 @@ git commit -m "test: add main module tests"
 **Files:**
 - Modify: `tests/test_api.py`
 
-- [ ] **Step 1: Add non-UTF8 encoding test**
+- [x] **Step 1: Add non-UTF8 encoding test**
 
 Append to `tests/test_api.py`:
 
@@ -221,7 +221,7 @@ def test_import_invalid_multipart(client: TestClient) -> None:
     assert response.status_code == 422
 ```
 
-- [ ] **Step 2: Run tests**
+- [x] **Step 2: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_api.py -v`
 Expected: All tests PASS (including new ones)
@@ -240,7 +240,7 @@ git commit -m "test: add API error path tests"
 **Files:**
 - Modify: `tests/test_mcp_tools.py`
 
-- [ ] **Step 1: Add malformed date tests**
+- [x] **Step 1: Add malformed date tests**
 
 Append to `tests/test_mcp_tools.py`:
 
@@ -265,7 +265,7 @@ def test_get_workout_count_malformed_date(db_session: Session) -> None:
 
 Note: These tests will initially fail because the `_get_*` functions don't have error handling yet. They'll pass after Issue #17 is implemented. For now, you can skip them or mark them with `@pytest.mark.xfail`.
 
-- [ ] **Step 2: Run tests**
+- [x] **Step 2: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_mcp_tools.py -v`
 Expected: Existing tests pass, new tests fail (expected — will pass after Issue #17)
@@ -284,7 +284,7 @@ git commit -m "test: add MCP tool error path tests (xfail until error handling)"
 **Files:**
 - Modify: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Update test job to enforce coverage**
+- [x] **Step 1: Update test job to enforce coverage**
 
 Replace the test job's `Run tests` step:
 
@@ -295,7 +295,7 @@ Replace the test job's `Run tests` step:
         run: uv run pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=90
 ```
 
-- [ ] **Step 2: Verify CI config is valid YAML**
+- [x] **Step 2: Verify CI config is valid YAML**
 
 Run: `python -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"`
 Expected: No errors
@@ -316,7 +316,7 @@ git commit -m "ci: enforce 90% coverage threshold in test job"
 **Files:**
 - Modify: `pyproject.toml`
 
-- [ ] **Step 1: Add structlog and pydantic-settings to dependencies**
+- [x] **Step 1: Add structlog and pydantic-settings to dependencies**
 
 Update `[project.dependencies]` in `pyproject.toml`:
 
@@ -336,17 +336,17 @@ dependencies = [
 ]
 ```
 
-- [ ] **Step 2: Install dependencies**
+- [x] **Step 2: Install dependencies**
 
 Run: `uv sync`
 Expected: Dependencies installed successfully
 
-- [ ] **Step 3: Verify imports work**
+- [x] **Step 3: Verify imports work**
 
 Run: `uv run python -c "import structlog; from pydantic_settings import BaseSettings; print('OK')"`
 Expected: `OK`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add pyproject.toml uv.lock
@@ -361,7 +361,7 @@ git commit -m "deps: add structlog and pydantic-settings"
 - Modify: `workout_mcp/config.py`
 - Modify: `tests/conftest.py` (update imports)
 
-- [ ] **Step 1: Rewrite config.py**
+- [x] **Step 1: Rewrite config.py**
 
 Replace `workout_mcp/config.py` entirely:
 
@@ -392,7 +392,7 @@ DATABASE_URL: str = settings.database_url
 TEST_DATABASE_URL: str = settings.test_database_url
 ```
 
-- [ ] **Step 2: Update conftest.py to use new config**
+- [x] **Step 2: Update conftest.py to use new config**
 
 Update `tests/conftest.py` line 10:
 
@@ -406,17 +406,17 @@ And update line 17 to use `settings.test_database_url`:
     engine = create_engine(settings.test_database_url)
 ```
 
-- [ ] **Step 3: Run type checker**
+- [x] **Step 3: Run type checker**
 
 Run: `uv run mypy workout_mcp/config.py tests/conftest.py`
 Expected: PASS
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest`
 Expected: All tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add workout_mcp/config.py tests/conftest.py
@@ -430,7 +430,7 @@ git commit -m "feat: rewrite config with pydantic-settings"
 **Files:**
 - Create: `workout_mcp/logging.py`
 
-- [ ] **Step 1: Create logging.py with structlog configuration**
+- [x] **Step 1: Create logging.py with structlog configuration**
 
 ```python
 """Structured logging configuration using structlog."""
@@ -515,7 +515,7 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     return structlog.get_logger(name)
 ```
 
-- [ ] **Step 2: Run type checker**
+- [x] **Step 2: Run type checker**
 
 Run: `uv run mypy workout_mcp/logging.py`
 Expected: PASS
@@ -534,7 +534,7 @@ git commit -m "feat: add structlog logging module"
 **Files:**
 - Modify: `main.py`
 
-- [ ] **Step 1: Add logging initialization to main.py**
+- [x] **Step 1: Add logging initialization to main.py**
 
 Replace `main.py`:
 
@@ -583,7 +583,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Run type checker**
+- [x] **Step 2: Run type checker**
 
 Run: `uv run mypy main.py`
 Expected: PASS
@@ -602,7 +602,7 @@ git commit -m "feat: initialize structlog on startup"
 **Files:**
 - Modify: `workout_mcp/api.py`
 
-- [ ] **Step 1: Add exception handlers**
+- [x] **Step 1: Add exception handlers**
 
 Add to `workout_mcp/api.py` after the `app` creation:
 
@@ -666,21 +666,21 @@ And update the `SQLAlchemyError` handler:
         raise HTTPException(status_code=500, detail="Database error during import") from exc
 ```
 
-- [ ] **Step 2: Run type checker**
+- [x] **Step 2: Run type checker**
 
 Run: `uv run mypy workout_mcp/api.py`
 Expected: PASS
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_api.py -v`
 Expected: All tests PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add workout_mcp/api.py
-git commit -m "feat: add FastAPI exception handlers with structlog"
+git commit -m "feat: add FastAPI exception handlers and request logging middleware"
 ```
 
 ---
@@ -690,7 +690,9 @@ git commit -m "feat: add FastAPI exception handlers with structlog"
 **Files:**
 - Modify: `workout_mcp/api.py`
 
-- [ ] **Step 1: Add middleware after exception handlers**
+Tasks 17.5 and 17.6 were implemented together in a single commit (`3566243`).
+
+- [x] **Step 1: Add middleware after exception handlers**
 
 ```python
 import time
@@ -726,17 +728,17 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 app.add_middleware(RequestLoggingMiddleware)
 ```
 
-- [ ] **Step 2: Run type checker**
+- [x] **Step 2: Run type checker**
 
 Run: `uv run mypy workout_mcp/api.py`
 Expected: PASS
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_api.py -v`
 Expected: All tests PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add workout_mcp/api.py
@@ -750,7 +752,7 @@ git commit -m "feat: add request logging middleware with structlog"
 **Files:**
 - Modify: `workout_mcp/mcp_server.py`
 
-- [ ] **Step 1: Add imports and logger**
+- [x] **Step 1: Add imports and logger**
 
 Add to top of `workout_mcp/mcp_server.py`:
 
@@ -761,7 +763,7 @@ from workout_mcp.logging import get_logger
 log = get_logger(__name__)
 ```
 
-- [ ] **Step 2: Add error handling to each MCP tool**
+- [x] **Step 2: Add error handling to each MCP tool**
 
 Wrap each `@mcp.tool()` function. Example for `get_workout_by_date_range`:
 
@@ -793,21 +795,21 @@ Apply the same pattern to all 7 tools:
 - `get_max_pr_by_exercise` — catch SQLAlchemyError
 - `get_min_pr_by_exercise` — catch SQLAlchemyError
 
-- [ ] **Step 3: Run type checker**
+- [x] **Step 3: Run type checker**
 
 Run: `uv run mypy workout_mcp/mcp_server.py`
 Expected: PASS
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_mcp_tools.py -v`
 Expected: All tests PASS (including previously xfail tests)
 
-- [ ] **Step 5: Remove xfail markers from error path tests**
+- [x] **Step 5: Remove xfail markers from error path tests**
 
 Remove `@pytest.mark.xfail` from the tests added in Task 16.5.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add workout_mcp/mcp_server.py tests/test_mcp_tools.py
@@ -821,7 +823,7 @@ git commit -m "feat: add error handling to all MCP tools"
 **Files:**
 - Modify: `workout_mcp/database.py`
 
-- [ ] **Step 1: Update database.py imports**
+- [x] **Step 1: Update database.py imports**
 
 Replace `workout_mcp/database.py`:
 
@@ -837,17 +839,17 @@ engine = create_engine(settings.database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 ```
 
-- [ ] **Step 2: Run type checker**
+- [x] **Step 2: Run type checker**
 
 Run: `uv run mypy workout_mcp/database.py`
 Expected: PASS
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest`
 Expected: All tests PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add workout_mcp/database.py
@@ -860,26 +862,26 @@ git commit -m "refactor: use settings object in database.py"
 
 **Files:** None
 
-- [ ] **Step 1: Run full test suite with coverage**
+- [x] **Step 1: Run full test suite with coverage**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest --cov --cov-report=term-missing --cov-fail-under=90`
 Expected: All tests PASS, coverage ≥90%
 
-- [ ] **Step 2: If coverage is below 90%, identify gaps and add tests**
+- [x] **Step 2: If coverage is below 90%, identify gaps and add tests**
 
 Check the coverage report for any modules below target. Add tests as needed.
 
-- [ ] **Step 3: Run linter and type checker**
+- [x] **Step 3: Run linter and type checker**
 
 Run: `uv run ruff check . && uv run mypy .`
 Expected: Both PASS
 
-- [ ] **Step 4: Run all pre-commit hooks**
+- [x] **Step 4: Run all pre-commit hooks**
 
 Run: `uv run pre-commit run --all-files`
 Expected: All hooks PASS
 
-- [ ] **Step 5: Commit any remaining fixes**
+- [x] **Step 5: Commit any remaining fixes**
 
 ```bash
 git add -A

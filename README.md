@@ -11,6 +11,8 @@ The Workout MCP Server acts as a centralized data hub for fitness tracking, allo
 ### REST API
 - **CSV Import**: Import workout data from CSV files exported from the Hevy application
 - Standardized data ingestion pipeline that normalizes and validates workout records
+- Structured exception handling with field-level validation errors (422), constraint violations (409), and safe internal error responses (500)
+- Request logging middleware with `X-Request-ID` propagation and structured JSON/console logging via `structlog`
 
 ### MCP Tools for AI Agents
 The server exposes the following query tools to enable AI agents to interact with workout data:
@@ -112,7 +114,8 @@ erDiagram
 │  ┌──────────────────────┐    ┌──────────────────────────┐   │
 │  │    /mcp (FastMCP)    │    │    REST API Endpoints    │   │
 │  │ - Query tools        │    │ - POST /import/csv       │   │
-│  │ - PR calculations    │    │ - Data validation        │   │
+│  │ - Error handling         │    │ - Data validation        │   │
+│  │ - PR calculations        │    │ - Exception handlers     │   │
 │  └──────────────────────┘    └──────────────────────────┘   │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │        Relational Database (PostgreSQL)                │ │
@@ -217,6 +220,20 @@ Once connected, you can ask your AI agent:
 | `get_max_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
 | `get_min_pr_by_exercise` | `exercise_name: str` | `{date, weight, reps}` or empty dict |
 
+## Environment Variables
+
+All settings are managed via `pydantic-settings` with `.env` file auto-loading.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/workout_mcp` | PostgreSQL connection string |
+| `TEST_DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/workout_mcp_test` | Test database connection string |
+| `APP_PORT` | `8000` | Port for the FastAPI server |
+| `LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `LOG_FORMAT` | `console` | Log output format (`console` for dev, `json` for production) |
+
+Copy `.env.example` to `.env` and adjust values for your environment.
+
 ## Project Structure
 
 ```
@@ -236,6 +253,7 @@ workout-mcp/
 │   ├── test_api.py                   # API integration tests (incl. error paths)
 │   ├── test_parser.py                # Parser unit tests
 │   ├── test_config.py                # Config module tests
+│   ├── test_logging.py               # Logging module tests
 │   ├── test_main.py                  # Main/app structure tests
 │   ├── test_mcp_tools.py             # MCP tool integration tests (incl. error paths)
 │   └── fixtures/
@@ -248,11 +266,12 @@ workout-mcp/
 │       └── cardio.csv                # Empty weight & reps (cardio)
 ├── workout_mcp/
 │   ├── __init__.py
-│   ├── config.py                     # Environment-based configuration
+│   ├── config.py                     # pydantic-settings configuration
 │   ├── database.py                   # Engine & session factory
+│   ├── logging.py                    # structlog logging configuration
 │   ├── models.py                     # SQLAlchemy ORM models
-│   ├── api.py                        # FastAPI app & REST endpoints
-│   ├── mcp_server.py                 # FastMCP server scaffold & tools
+│   ├── api.py                        # FastAPI app, REST endpoints, exception handlers, middleware
+│   ├── mcp_server.py                 # FastMCP server & tools with error handling
 │   └── parser.py                     # Hevy CSV export parser
 ├── .dockerignore                        # Docker build exclusions
 ├── Dockerfile                           # Production container build
@@ -351,5 +370,7 @@ uv run pre-commit run --all-files  # Run all hooks
 | `fastapi>=0.115` | REST API framework |
 | `uvicorn>=0.32` | ASGI server |
 | `python-multipart>=0.0.12` | Multipart form parsing for file uploads |
+| `structlog>=24.1.0` | Structured logging |
+| `pydantic-settings>=2.0.0` | Typed settings management |
 
 **Dev dependencies:** `pytest>=8.0`, `pytest-cov>=5.0`, `ruff>=0.6`, `mypy>=1.11`, `pre-commit>=3.8`
