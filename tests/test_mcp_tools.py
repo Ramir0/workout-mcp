@@ -215,7 +215,7 @@ def test_get_min_pr_by_exercise_empty(db_session: Session) -> None:
     assert result == {}
 
 
-@pytest.mark.xfail(reason="Error handling not implemented yet — will pass after Issue #17")
+@pytest.mark.xfail(reason="Error handling is in the public @mcp.tool() wrapper, not _get_* helper")
 def test_get_workout_by_date_range_malformed_dates(db_session: Session) -> None:
     """Malformed date strings return error dict."""
     from workout_mcp.mcp_server import _get_workout_by_date_range
@@ -225,7 +225,7 @@ def test_get_workout_by_date_range_malformed_dates(db_session: Session) -> None:
     assert "error" in result
 
 
-@pytest.mark.xfail(reason="Error handling not implemented yet — will pass after Issue #17")
+@pytest.mark.xfail(reason="Error handling is in the public @mcp.tool() wrapper, not _get_* helper")
 def test_get_workout_count_malformed_date(db_session: Session) -> None:
     """Malformed date in count query returns error dict."""
     from workout_mcp.mcp_server import _get_workout_count

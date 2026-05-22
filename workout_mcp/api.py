@@ -3,20 +3,83 @@
 from __future__ import annotations
 
 import io
-import logging
+import time
+import uuid
 from collections.abc import Generator
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
 from workout_mcp.database import SessionLocal
+from workout_mcp.logging import get_logger
 from workout_mcp.models import Exercise, Routine, Set, Workout, WorkoutExercise
 from workout_mcp.parser import ParseError, parse_hevy_csv
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 app = FastAPI(title="Workout MCP Server")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Return 422 with field-level validation errors."""
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_exception_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    """Return 409 for database constraint violations."""
+    logger.error("integrity_error", error=str(exc))
+    return JSONResponse(
+        status_code=409,
+        content={"detail": "Duplicate resource or constraint violation"},
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Return 500 with safe message for unhandled exceptions."""
+    logger.error("unhandled_exception", error=str(exc), exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """Log each request with method, path, status, and duration."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        start = time.perf_counter()
+
+        response = await call_next(request)
+
+        duration_ms = (time.perf_counter() - start) * 1000
+        logger.info(
+            "request",
+            method=request.method,
+            path=str(request.url.path),
+            status_code=response.status_code,
+            duration_ms=round(duration_ms, 2),
+            request_id=request_id,
+        )
+
+        response.headers["X-Request-ID"] = request_id
+        return response
+
+
+app.add_middleware(RequestLoggingMiddleware)
 
 
 def get_db() -> Generator[Session]:
@@ -145,7 +208,7 @@ def import_csv(
         db.commit()
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.exception("Database error during CSV import")
+        logger.error("database_import_error", error=str(exc))
         raise HTTPException(status_code=500, detail="Database error during import") from exc
 
     return {

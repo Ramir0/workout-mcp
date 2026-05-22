@@ -7,10 +7,14 @@ from contextlib import contextmanager
 from datetime import datetime
 
 from mcp.server.fastmcp import FastMCP
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
 from workout_mcp.database import SessionLocal
+from workout_mcp.logging import get_logger
 from workout_mcp.models import Workout, WorkoutExercise
+
+log = get_logger(__name__)
 
 mcp = FastMCP(
     "WorkoutServer",
@@ -79,14 +83,23 @@ def _get_workout_by_date_range(
 
 
 @mcp.tool()
-def get_workout_by_date_range(start_date: str, end_date: str) -> list[dict[str, object]]:
+def get_workout_by_date_range(
+    start_date: str, end_date: str
+) -> list[dict[str, object]] | dict[str, str]:
     """Retrieve all workouts within a date range.
 
     Returns full workout details including routine name, exercises, and sets.
     Dates should be in ISO format (YYYY-MM-DD).
     """
-    with get_db_session() as db:
-        return _get_workout_by_date_range(db, start_date, end_date)
+    try:
+        with get_db_session() as db:
+            return _get_workout_by_date_range(db, start_date, end_date)
+    except ValueError as exc:
+        log.error("invalid_parameters", tool="get_workout_by_date_range", error=str(exc))
+        return {"error": f"Invalid parameters: {exc}"}
+    except SQLAlchemyError as exc:
+        log.error("database_error", tool="get_workout_by_date_range", error=str(exc))
+        return {"error": "Database query failed"}
 
 
 def _get_workout_by_routine(db: Session, routine_name: str) -> list[dict[str, object]]:
@@ -111,13 +124,17 @@ def _get_workout_by_routine(db: Session, routine_name: str) -> list[dict[str, ob
 
 
 @mcp.tool()
-def get_workout_by_routine(routine_name: str) -> list[dict[str, object]]:
+def get_workout_by_routine(routine_name: str) -> list[dict[str, object]] | dict[str, str]:
     """Retrieve all workouts for a given routine name.
 
     Returns full workout details including exercises and sets.
     """
-    with get_db_session() as db:
-        return _get_workout_by_routine(db, routine_name)
+    try:
+        with get_db_session() as db:
+            return _get_workout_by_routine(db, routine_name)
+    except SQLAlchemyError as exc:
+        log.error("database_error", tool="get_workout_by_routine", error=str(exc))
+        return {"error": "Database query failed"}
 
 
 def _get_workout_by_exercise(db: Session, exercise_name: str) -> list[dict[str, object]]:
@@ -143,13 +160,17 @@ def _get_workout_by_exercise(db: Session, exercise_name: str) -> list[dict[str, 
 
 
 @mcp.tool()
-def get_workout_by_exercise(exercise_name: str) -> list[dict[str, object]]:
+def get_workout_by_exercise(exercise_name: str) -> list[dict[str, object]] | dict[str, str]:
     """Retrieve all workouts that contain a specific exercise.
 
     Returns full workout details (all exercises and sets) to preserve workout context.
     """
-    with get_db_session() as db:
-        return _get_workout_by_exercise(db, exercise_name)
+    try:
+        with get_db_session() as db:
+            return _get_workout_by_exercise(db, exercise_name)
+    except SQLAlchemyError as exc:
+        log.error("database_error", tool="get_workout_by_exercise", error=str(exc))
+        return {"error": "Database query failed"}
 
 
 def _get_workout_count(
@@ -181,14 +202,21 @@ def get_workout_count(
     start_date: str = "",
     end_date: str = "",
     routine_name: str = "",
-) -> int:
+) -> int | dict[str, str]:
     """Get the total count of workouts, with optional filters.
 
     Accepts optional date range and routine name filters. Returns the integer
     count of matching workouts. Dates should be in ISO format (YYYY-MM-DD).
     """
-    with get_db_session() as db:
-        return _get_workout_count(db, start_date, end_date, routine_name)
+    try:
+        with get_db_session() as db:
+            return _get_workout_count(db, start_date, end_date, routine_name)
+    except ValueError as exc:
+        log.error("invalid_parameters", tool="get_workout_count", error=str(exc))
+        return {"error": f"Invalid parameters: {exc}"}
+    except SQLAlchemyError as exc:
+        log.error("database_error", tool="get_workout_count", error=str(exc))
+        return {"error": "Database query failed"}
 
 
 def _get_last_workout(db: Session, exercise_name: str = "") -> dict[str, object]:
@@ -227,8 +255,12 @@ def get_last_workout(exercise_name: str = "") -> dict[str, object]:
     If an exercise name is provided, returns the most recent workout
     containing that exercise. Returns an empty dict if no workouts found.
     """
-    with get_db_session() as db:
-        return _get_last_workout(db, exercise_name)
+    try:
+        with get_db_session() as db:
+            return _get_last_workout(db, exercise_name)
+    except SQLAlchemyError as exc:
+        log.error("database_error", tool="get_last_workout", error=str(exc))
+        return {"error": "Database query failed"}
 
 
 def _get_max_pr_by_exercise(db: Session, exercise_name: str) -> dict[str, object]:
@@ -295,8 +327,12 @@ def get_max_pr_by_exercise(exercise_name: str) -> dict[str, object]:
     Returns:
         Dict with "date", "weight", and "reps" of the PR, or empty dict if no data.
     """
-    with get_db_session() as db:
-        return _get_max_pr_by_exercise(db, exercise_name)
+    try:
+        with get_db_session() as db:
+            return _get_max_pr_by_exercise(db, exercise_name)
+    except SQLAlchemyError as exc:
+        log.error("database_error", tool="get_max_pr_by_exercise", error=str(exc))
+        return {"error": "Database query failed"}
 
 
 def _get_min_pr_by_exercise(db: Session, exercise_name: str) -> dict[str, object]:
@@ -363,5 +399,9 @@ def get_min_pr_by_exercise(exercise_name: str) -> dict[str, object]:
     Returns:
         Dict with "date", "weight", and "reps" of the PR, or empty dict if no data.
     """
-    with get_db_session() as db:
-        return _get_min_pr_by_exercise(db, exercise_name)
+    try:
+        with get_db_session() as db:
+            return _get_min_pr_by_exercise(db, exercise_name)
+    except SQLAlchemyError as exc:
+        log.error("database_error", tool="get_min_pr_by_exercise", error=str(exc))
+        return {"error": "Database query failed"}
