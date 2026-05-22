@@ -233,9 +233,11 @@ workout-mcp/
 │   ├── conftest.py                   # Pytest fixtures with transaction isolation
 │   ├── test_models.py                # Model unit tests
 │   ├── test_database.py              # Database integration tests
-│   ├── test_api.py                   # API integration tests
+│   ├── test_api.py                   # API integration tests (incl. error paths)
 │   ├── test_parser.py                # Parser unit tests
-│   ├── test_mcp_tools.py             # MCP tool integration tests
+│   ├── test_config.py                # Config module tests
+│   ├── test_main.py                  # Main/app structure tests
+│   ├── test_mcp_tools.py             # MCP tool integration tests (incl. error paths)
 │   └── fixtures/
 │       ├── sample_hevy.csv           # Valid multi-routine fixture
 │       ├── empty.csv                 # Header-only fixture
@@ -332,6 +334,7 @@ Run tooling checks:
 uv run ruff check .          # Lint
 uv run mypy .                # Type check
 uv run pytest                # Run tests
+uv run pytest --cov --cov-report=term-missing --cov-fail-under=90  # Tests + coverage
 uv run pre-commit run --all-files  # Run all hooks
 ```
 

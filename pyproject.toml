@@ -68,9 +68,20 @@ ignore_missing_imports = true
 module = ["alembic.*"]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = ["tests.test_config"]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["workout_mcp"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true

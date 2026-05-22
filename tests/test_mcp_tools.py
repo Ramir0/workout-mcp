@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import pytest
 from sqlalchemy.orm import Session
 
 from workout_mcp.models import Exercise, Routine, Set, Workout, WorkoutExercise
@@ -212,3 +213,23 @@ def test_get_min_pr_by_exercise_empty(db_session: Session) -> None:
 
     result = _get_min_pr_by_exercise(db_session, "Nonexistent")
     assert result == {}
+
+
+@pytest.mark.xfail(reason="Error handling not implemented yet — will pass after Issue #17")
+def test_get_workout_by_date_range_malformed_dates(db_session: Session) -> None:
+    """Malformed date strings return error dict."""
+    from workout_mcp.mcp_server import _get_workout_by_date_range
+
+    result = _get_workout_by_date_range(db_session, "not-a-date", "2025-01-01")
+    assert isinstance(result, dict)
+    assert "error" in result
+
+
+@pytest.mark.xfail(reason="Error handling not implemented yet — will pass after Issue #17")
+def test_get_workout_count_malformed_date(db_session: Session) -> None:
+    """Malformed date in count query returns error dict."""
+    from workout_mcp.mcp_server import _get_workout_count
+
+    result = _get_workout_count(db_session, start_date="bad-date")
+    assert isinstance(result, dict)
+    assert "error" in result

@@ -1,0 +1,55 @@
+"""Tests for workout_mcp.config module."""
+
+from __future__ import annotations
+
+import importlib
+import os
+from unittest.mock import patch
+
+import workout_mcp.config
+
+
+def test_config_exports_database_url() -> None:
+    """Config module exports DATABASE_URL as a string."""
+    assert isinstance(workout_mcp.config.DATABASE_URL, str)
+    assert len(workout_mcp.config.DATABASE_URL) > 0
+
+
+def test_config_exports_test_database_url() -> None:
+    """Config module exports TEST_DATABASE_URL as a string."""
+    assert isinstance(workout_mcp.config.TEST_DATABASE_URL, str)
+    assert len(workout_mcp.config.TEST_DATABASE_URL) > 0
+
+
+def test_database_url_env_override() -> None:
+    """DATABASE_URL reads from environment variable."""
+    original = workout_mcp.config.DATABASE_URL
+    try:
+        with patch.dict(
+            os.environ, {"DATABASE_URL": "postgresql://custom:custom@localhost:5432/custom_db"}
+        ):
+            importlib.reload(workout_mcp.config)
+            assert (
+                workout_mcp.config.DATABASE_URL
+                == "postgresql://custom:custom@localhost:5432/custom_db"
+            )
+    finally:
+        importlib.reload(workout_mcp.config)
+        assert original == workout_mcp.config.DATABASE_URL
+
+
+def test_test_database_url_env_override() -> None:
+    """TEST_DATABASE_URL reads from environment variable."""
+    original = workout_mcp.config.TEST_DATABASE_URL
+    try:
+        with patch.dict(
+            os.environ, {"TEST_DATABASE_URL": "postgresql://test:test@localhost:5432/test_db"}
+        ):
+            importlib.reload(workout_mcp.config)
+            assert (
+                workout_mcp.config.TEST_DATABASE_URL
+                == "postgresql://test:test@localhost:5432/test_db"
+            )
+    finally:
+        importlib.reload(workout_mcp.config)
+        assert original == workout_mcp.config.TEST_DATABASE_URL

@@ -29,7 +29,7 @@
 **Files:**
 - Modify: `pyproject.toml`
 
-- [ ] **Step 1: Add pytest-cov configuration to pyproject.toml**
+- [x] **Step 1: Add pytest-cov configuration to pyproject.toml**
 
 Add to `[tool.pytest.ini_options]`:
 
@@ -53,12 +53,12 @@ fail_under = 90
 show_missing = true
 ```
 
-- [ ] **Step 2: Verify pytest runs with coverage**
+- [x] **Step 2: Verify pytest runs with coverage**
 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest --cov --cov-report=term-missing`
 Expected: Tests pass, coverage report shown
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add pyproject.toml
@@ -129,7 +129,7 @@ def test_settings_invalid_port() -> None:
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_config.py -v`
 Expected: All 3 tests PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_config.py
@@ -184,7 +184,7 @@ def test_health_endpoint() -> None:
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_main.py -v`
 Expected: All 3 tests PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_main.py
@@ -226,7 +226,7 @@ def test_import_invalid_multipart(client: TestClient) -> None:
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_api.py -v`
 Expected: All tests PASS (including new ones)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_api.py
@@ -270,7 +270,7 @@ Note: These tests will initially fail because the `_get_*` functions don't have 
 Run: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest tests/test_mcp_tools.py -v`
 Expected: Existing tests pass, new tests fail (expected — will pass after Issue #17)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_mcp_tools.py
@@ -300,7 +300,7 @@ Replace the test job's `Run tests` step:
 Run: `python -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .github/workflows/ci.yml
@@ -520,7 +520,7 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
 Run: `uv run mypy workout_mcp/logging.py`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add workout_mcp/logging.py
@@ -588,7 +588,7 @@ if __name__ == "__main__":
 Run: `uv run mypy main.py`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add main.py
