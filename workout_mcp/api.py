@@ -95,7 +95,7 @@ def get_db() -> Generator[Session]:
 def import_csv(
     file: UploadFile = File(...),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
-) -> dict[str, dict[str, int] | list[dict[str, str]]]:
+) -> dict[str, dict[str, int]]:
     """Import a Hevy CSV export into the database."""
     if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be a CSV")
@@ -117,7 +117,6 @@ def import_csv(
     workout_exercises_updated = 0
     sets_created = 0
     sets_discarded = 0
-    warnings: list[dict[str, str]] = []
 
     try:
         for parsed_routine in routines:
@@ -200,12 +199,6 @@ def import_csv(
                             sets_created += 1
                         else:
                             sets_discarded += 1
-                            warnings.append(
-                                {
-                                    "row": str(parsed_set.source_row),
-                                    "reason": f"Set index {parsed_set.set_index} already exists for {parsed_exercise.name}",
-                                }
-                            )
 
         db.commit()
     except SQLAlchemyError as exc:
@@ -224,5 +217,4 @@ def import_csv(
         "discarded": {
             "sets": sets_discarded,
         },
-        "warnings": warnings,
     }
