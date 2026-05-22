@@ -14,6 +14,8 @@ dependencies = [
     "fastapi>=0.115",
     "python-multipart>=0.0.12",
     "uvicorn>=0.32",
+    "structlog>=24.1.0",
+    "pydantic-settings>=2.0.0",
 ]
 
 [build-system]
