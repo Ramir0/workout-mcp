@@ -104,38 +104,29 @@ erDiagram
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      AI Agent / Client                      │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ MCP Protocol (Streamable HTTP)
-┌───────────────────────────▼─────────────────────────────────┐
-│              MCP Server (port 9091)                         │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │    FastMCP — Query tools, PR calculations            │   │
-│  └──────────────────────────────────────────────────────┘   │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ SQLAlchemy
-┌───────────────────────────▼─────────────────────────────────┐
-│        Relational Database (PostgreSQL)                     │
-│          [ROUTINE, WORKOUT, EXERCISE, SET]                  │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Clients["Clients"]
+        AI[AI Agent / Client]
+        REST[REST API Client]
+    end
 
-┌─────────────────────────────────────────────────────────────┐
-│              REST API Client                                │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ HTTP/JSON
-┌───────────────────────────▼─────────────────────────────────┐
-│              REST API Server (port 9090)                    │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │    FastAPI — POST /import/csv, validation            │   │
-│  └──────────────────────────────────────────────────────┘   │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ SQLAlchemy
-┌───────────────────────────▼─────────────────────────────────┐
-│        Relational Database (PostgreSQL)                     │
-│          [ROUTINE, WORKOUT, EXERCISE, SET]                  │
-└─────────────────────────────────────────────────────────────┘
+    subgraph MCP["MCP Server — port 9091"]
+        MCP_APP[FastMCP<br/>Query tools, PR calculations]
+    end
+
+    subgraph API["REST API Server — port 9090"]
+        API_APP[FastAPI<br/>POST /import/csv, validation]
+    end
+
+    subgraph DB["Relational Database — PostgreSQL"]
+        TABLES[ROUTINE, WORKOUT, EXERCISE, SET]
+    end
+
+    AI -->|"MCP Protocol<br/>(Streamable HTTP)"| MCP_APP
+    REST -->|"HTTP/JSON"| API_APP
+    MCP_APP -->|SQLAlchemy| TABLES
+    API_APP -->|SQLAlchemy| TABLES
 ```
 
 ## Requirements
