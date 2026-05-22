@@ -118,3 +118,20 @@ def test_import_csv_malformed_date(client: TestClient) -> None:
 
     assert response.status_code == 400
     assert "Unable to parse date" in response.json()["detail"]
+
+
+def test_import_non_utf8_file(client: TestClient) -> None:
+    """Non-UTF8 encoded file returns 400."""
+    import io
+
+    content = b"\x80\x81\x82\x83"
+    files = {"file": ("test.csv", io.BytesIO(content), "text/csv")}
+    response = client.post("/import/csv", files=files)
+    assert response.status_code == 400
+    assert "UTF-8" in response.json()["detail"]
+
+
+def test_import_invalid_multipart(client: TestClient) -> None:
+    """Missing file field returns 422."""
+    response = client.post("/import/csv")
+    assert response.status_code == 422
