@@ -174,3 +174,33 @@ def test_import_invalid_multipart(client: TestClient) -> None:
     """Missing file field returns 422."""
     response = client.post("/import/csv")
     assert response.status_code == 422
+
+
+def test_request_middleware_adds_request_id(client: TestClient) -> None:
+    """Request logging middleware adds X-Request-ID header."""
+    import io
+
+    response = client.post(
+        "/import/csv",
+        files={"file": ("test.csv", io.BytesIO(b"title:,Workout 1"), "text/csv")},
+    )
+    assert "X-Request-ID" in response.headers
+
+
+def test_generic_exception_handler_returns_500() -> None:
+    """Generic exception handler returns 500 for unhandled errors."""
+    import io
+    from unittest.mock import patch
+
+    from fastapi.testclient import TestClient
+
+    from workout_mcp.api import app
+
+    client = TestClient(app, raise_server_exceptions=False)
+    with patch("workout_mcp.api.parse_hevy_csv", side_effect=RuntimeError("Boom")):
+        response = client.post(
+            "/import/csv",
+            files={"file": ("test.csv", io.BytesIO(b"some,valid,utf8,content"), "text/csv")},
+        )
+        assert response.status_code == 500
+        assert "Internal server error" in response.json()["detail"]

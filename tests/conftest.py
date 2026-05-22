@@ -7,14 +7,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, SessionTransaction, sessionmaker
 
-from workout_mcp.config import TEST_DATABASE_URL
+from workout_mcp.config import settings
 from workout_mcp.models import Base
 
 
 @pytest.fixture(scope="session")
 def db_engine() -> Generator[Engine]:
     """Create a test database engine and schema (once per session)."""
-    engine = create_engine(TEST_DATABASE_URL)
+    engine = create_engine(settings.test_database_url)
     Base.metadata.create_all(engine)
     yield engine
     Base.metadata.drop_all(engine)

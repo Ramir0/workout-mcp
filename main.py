@@ -8,6 +8,7 @@ import uvicorn
 from starlette.routing import Mount
 
 from workout_mcp.api import app
+from workout_mcp.logging import setup_logging
 from workout_mcp.mcp_server import mcp
 
 # Configure MCP to serve at the mount point root (no nested /mcp path).
@@ -33,6 +34,7 @@ app.router.lifespan_context = lifespan
 
 
 def main() -> None:
+    setup_logging()
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 

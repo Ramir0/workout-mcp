@@ -215,7 +215,7 @@ def test_get_min_pr_by_exercise_empty(db_session: Session) -> None:
     assert result == {}
 
 
-@pytest.mark.xfail(reason="Error handling not implemented yet — will pass after Issue #17")
+@pytest.mark.xfail(reason="Error handling is in the public @mcp.tool() wrapper, not _get_* helper")
 def test_get_workout_by_date_range_malformed_dates(db_session: Session) -> None:
     """Malformed date strings return error dict."""
     from workout_mcp.mcp_server import _get_workout_by_date_range
@@ -225,7 +225,7 @@ def test_get_workout_by_date_range_malformed_dates(db_session: Session) -> None:
     assert "error" in result
 
 
-@pytest.mark.xfail(reason="Error handling not implemented yet — will pass after Issue #17")
+@pytest.mark.xfail(reason="Error handling is in the public @mcp.tool() wrapper, not _get_* helper")
 def test_get_workout_count_malformed_date(db_session: Session) -> None:
     """Malformed date in count query returns error dict."""
     from workout_mcp.mcp_server import _get_workout_count
@@ -233,3 +233,140 @@ def test_get_workout_count_malformed_date(db_session: Session) -> None:
     result = _get_workout_count(db_session, start_date="bad-date")
     assert isinstance(result, dict)
     assert "error" in result
+
+
+def test_public_get_workout_by_date_range_success(db_session: Session) -> None:
+    """Public tool wrapper works with valid dates."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_workout_by_date_range
+
+    _seed_workouts(db_session)
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_workout_by_date_range("2024-01-01", "2024-01-31")
+        assert isinstance(result, list)
+        assert len(result) == 3
+
+
+def test_public_get_workout_by_date_range_value_error(db_session: Session) -> None:
+    """Public tool wrapper returns error dict for bad dates."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_workout_by_date_range
+
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_workout_by_date_range("not-a-date", "2025-01-01")
+        assert isinstance(result, dict)
+        assert "error" in result
+
+
+def test_public_get_workout_count_value_error(db_session: Session) -> None:
+    """Public tool wrapper returns error dict for bad dates in count."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_workout_count
+
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_workout_count(start_date="bad-date")
+        assert isinstance(result, dict)
+        assert "error" in result
+
+
+def test_public_get_workout_by_routine_success(db_session: Session) -> None:
+    """Public tool wrapper for get_workout_by_routine works."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_workout_by_routine
+
+    _seed_workouts(db_session)
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_workout_by_routine("Push Day")
+        assert isinstance(result, list)
+        assert len(result) == 2
+
+
+def test_public_get_workout_by_exercise_success(db_session: Session) -> None:
+    """Public tool wrapper for get_workout_by_exercise works."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_workout_by_exercise
+
+    _seed_workouts(db_session)
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_workout_by_exercise("Bench Press")
+        assert isinstance(result, list)
+        assert len(result) == 2
+
+
+def test_public_get_last_workout_success(db_session: Session) -> None:
+    """Public tool wrapper for get_last_workout works."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_last_workout
+
+    _seed_workouts(db_session)
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_last_workout()
+        assert isinstance(result, dict)
+        assert result["routine"] == "Push Day"
+
+
+def test_public_get_max_pr_by_exercise_success(db_session: Session) -> None:
+    """Public tool wrapper for get_max_pr_by_exercise works."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_max_pr_by_exercise
+
+    _seed_workouts(db_session)
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_max_pr_by_exercise("Bench Press")
+        assert isinstance(result, dict)
+        assert result["weight"] == 120.0
+
+
+def test_public_get_min_pr_by_exercise_success(db_session: Session) -> None:
+    """Public tool wrapper for get_min_pr_by_exercise works."""
+    from unittest.mock import patch
+
+    from workout_mcp.mcp_server import get_min_pr_by_exercise
+
+    _seed_workouts(db_session)
+    with patch("workout_mcp.mcp_server.get_db_session", return_value=db_session):
+        result = get_min_pr_by_exercise("Bench Press")
+        assert isinstance(result, dict)
+        assert result["weight"] == 100.0
+
+
+def test_get_db_session_context_manager() -> None:
+    """get_db_session context manager yields session and closes it."""
+    from unittest.mock import MagicMock, patch
+
+    from workout_mcp.mcp_server import get_db_session
+
+    mock_session = MagicMock()
+    mock_session.__enter__.return_value = mock_session
+
+    with patch("workout_mcp.mcp_server.SessionLocal", return_value=mock_session):
+        with get_db_session() as session:
+            assert session is mock_session
+        mock_session.close.assert_called_once()
+
+
+def test_public_get_workout_by_date_range_db_error(db_session: Session) -> None:
+    """Public tool wrapper catches SQLAlchemyError and returns error dict."""
+    from unittest.mock import patch
+
+    from sqlalchemy.exc import SQLAlchemyError
+
+    from workout_mcp.mcp_server import get_workout_by_date_range
+
+    with (
+        patch("workout_mcp.mcp_server.get_db_session", return_value=db_session),
+        patch(
+            "workout_mcp.mcp_server._get_workout_by_date_range",
+            side_effect=SQLAlchemyError("DB error"),
+        ),
+    ):
+        result = get_workout_by_date_range("2024-01-01", "2024-01-31")
+        assert isinstance(result, dict)
+        assert result["error"] == "Database query failed"

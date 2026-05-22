@@ -12,6 +12,13 @@ def test_app_has_correct_title() -> None:
     assert app.title == "Workout MCP Server"
 
 
+def test_mcp_server_is_importable() -> None:
+    """MCP server module is importable and has FastMCP instance."""
+    from workout_mcp.mcp_server import mcp
+
+    assert mcp.settings.streamable_http_path == "/mcp"
+
+
 def test_mcp_server_is_mounted() -> None:
     """MCP server is mounted at /mcp."""
     __import__("main")  # triggers MCP mount on app
