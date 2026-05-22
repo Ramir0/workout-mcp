@@ -110,17 +110,31 @@ erDiagram
 └───────────────────────────┬─────────────────────────────────┘
                             │ MCP Protocol (Streamable HTTP)
 ┌───────────────────────────▼─────────────────────────────────┐
-│                   FastAPI (port 8000)                       │
-│  ┌──────────────────────┐    ┌──────────────────────────┐   │
-│  │    /mcp (FastMCP)    │    │    REST API Endpoints    │   │
-│  │ - Query tools        │    │ - POST /import/csv       │   │
-│  │ - Error handling     │    │ - Data validation        │   │
-│  │ - PR calculations    │    │ - Exception handlers     │   │
-│  └──────────────────────┘    └──────────────────────────┘   │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │        Relational Database (PostgreSQL)                │ │
-│  │          [ROUTINE, WORKOUT, EXERCISE, SET]             │ │
-│  └────────────────────────────────────────────────────────┘ │
+│              MCP Server (port 9091)                         │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │    FastMCP — Query tools, PR calculations            │   │
+│  └──────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ SQLAlchemy
+┌───────────────────────────▼─────────────────────────────────┐
+│        Relational Database (PostgreSQL)                     │
+│          [ROUTINE, WORKOUT, EXERCISE, SET]                  │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│              REST API Client                                │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ HTTP/JSON
+┌───────────────────────────▼─────────────────────────────────┐
+│              REST API Server (port 9090)                    │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │    FastAPI — POST /import/csv, validation            │   │
+│  └──────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ SQLAlchemy
+┌───────────────────────────▼─────────────────────────────────┐
+│        Relational Database (PostgreSQL)                     │
+│          [ROUTINE, WORKOUT, EXERCISE, SET]                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -172,7 +186,11 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run al
 ### Starting the Server
 
 ```bash
+# REST API (port 9090)
 python main.py
+
+# MCP Server (port 9091)
+python mcp_server_main.py
 ```
 
 ### Importing Hevy CSV Data
@@ -180,7 +198,7 @@ python main.py
 Export your workout data from the Hevy app and use the REST API endpoint to import:
 
 ```bash
-curl -X POST http://localhost:8000/import/csv \
+curl -X POST http://localhost:9090/import/csv \
   -F "file=@hevy_export.csv"
 ```
 
@@ -194,7 +212,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "workout": {
-      "url": "http://localhost:8000/mcp"
+      "url": "http://localhost:9091"
     }
   }
 }
@@ -207,12 +225,12 @@ Add to `.continue/config.yaml`:
 ```yaml
 mcpServers:
   - name: workout
-    url: http://localhost:8000/mcp
+    url: http://localhost:9091
 ```
 
 #### Generic MCP Client
 
-Any MCP-compatible client can connect to `http://localhost:8000/mcp` using streamable HTTP transport.
+Any MCP-compatible client can connect to `http://localhost:9091` using streamable HTTP transport.
 
 ### Example Queries
 
@@ -257,7 +275,8 @@ All settings are managed via `pydantic-settings` with `.env` file auto-loading.
 |----------|---------|-------------|
 | `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/workout_mcp` | PostgreSQL connection string |
 | `TEST_DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/workout_mcp_test` | Test database connection string |
-| `APP_PORT` | `8000` | Port for the FastAPI server |
+| `APP_PORT` | `9090` | Port for the REST API server |
+| `MCP_PORT` | `9091` | Port for the MCP server |
 | `LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 | `LOG_FORMAT` | `console` | Log output format (`console` for dev, `json` for production) |
 
@@ -307,6 +326,7 @@ workout-mcp/
 ├── docker-compose.yml                # PostgreSQL container for local development
 ├── docker-compose.prod.yml           # Production: app + postgres
 ├── main.py                           # FastAPI server entry point
+├── mcp_server_main.py                # MCP server entry point
 ├── pyproject.toml                    # Project configuration
 ├── uv.lock                           # Locked dependencies
 ├── .env.example                      # Environment template
@@ -334,7 +354,7 @@ export DATABASE_PASSWORD=<secure-password>
 
 2. Run migrations:
 ```bash
-docker compose -f docker-compose.prod.yml run --rm app uv run alembic upgrade head
+docker compose -f docker-compose.prod.yml run --rm api uv run alembic upgrade head
 ```
 
 3. Start all services:
@@ -342,7 +362,8 @@ docker compose -f docker-compose.prod.yml run --rm app uv run alembic upgrade he
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-4. Verify: `curl http://localhost:8000/mcp`
+4. Verify REST API: `curl -X POST http://localhost:9090/import/csv -F "file=@hevy_export.csv"`
+5. Verify MCP Server: `curl http://localhost:9091`
 
 The host's HTTP server should reverse proxy to `localhost:8000`.
 
@@ -350,7 +371,8 @@ The host's HTTP server should reverse proxy to `localhost:8000`.
 
 ```bash
 docker-compose up -d          # Start PostgreSQL
-python main.py                # Start server (REST API + MCP)
+python main.py                # Start REST API (port 9090)
+python mcp_server_main.py     # Start MCP Server (port 9091)
 ```
 
 ## Development
