@@ -74,12 +74,12 @@ def test_import_csv_hybrid_workout(client: TestClient, db_session: Session) -> N
     assert data["created"]["routines"] == 1
     assert data["created"]["workouts"] == 1
     assert data["created"]["exercises"] == 1
+    assert data["created"]["workout_exercises"] == 1
     assert data["created"]["sets"] == 2
     assert data["discarded"]["sets"] == 0
+    assert data["warnings"] == []
 
     # Verify database state
-    from workout_mcp.models import Set
-
     sets = db_session.query(Set).all()
     assert len(sets) == 2
     strength = next(s for s in sets if s.weight is not None)
