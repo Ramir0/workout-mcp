@@ -82,9 +82,4 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_mcp_test
-        run: |
-          COV_OPTS=""
-          if [ -d workout_mcp ]; then
-            COV_OPTS="--cov=workout_mcp --cov-report=term-missing"
-          fi
-          uv run pytest $COV_OPTS || [ $? -eq 5 ]
+        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=90
