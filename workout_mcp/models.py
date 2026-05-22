@@ -87,9 +87,11 @@ class Set(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     workout_exercise_id: Mapped[int] = mapped_column(ForeignKey("workout_exercise.id"))
     set_index: Mapped[int]
-    reps: Mapped[int]
-    weight: Mapped[float]
+    reps: Mapped[int | None] = mapped_column(default=None)
+    weight: Mapped[float | None] = mapped_column(default=None)
     rpe: Mapped[float | None] = mapped_column(default=None)
+    distance_km: Mapped[float | None] = mapped_column(default=None)
+    duration_seconds: Mapped[float | None] = mapped_column(default=None)
 
     __table_args__ = (UniqueConstraint("workout_exercise_id", "set_index"),)
 
@@ -98,5 +100,6 @@ class Set(Base):
     def __repr__(self) -> str:
         return (
             f"Set(id={self.id!r}, set_index={self.set_index!r}, "
-            f"reps={self.reps!r}, weight={self.weight!r})"
+            f"reps={self.reps!r}, weight={self.weight!r}, "
+            f"distance_km={self.distance_km!r}, duration_seconds={self.duration_seconds!r})"
         )

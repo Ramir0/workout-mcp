@@ -64,6 +64,37 @@ def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
     assert db_session.query(Set).count() == 4
 
 
+def test_import_csv_hybrid_workout(client: TestClient, db_session: Session) -> None:
+    """Import a hybrid workout with strength and cardio sets."""
+    with open(FIXTURES_DIR / "hybrid.csv", "rb") as f:
+        response = client.post("/import/csv", files={"file": ("hybrid.csv", f)})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created"]["routines"] == 1
+    assert data["created"]["workouts"] == 1
+    assert data["created"]["exercises"] == 1
+    assert data["created"]["workout_exercises"] == 1
+    assert data["created"]["sets"] == 2
+    assert data["discarded"]["sets"] == 0
+    assert data["warnings"] == []
+
+    # Verify database state
+    sets = db_session.query(Set).all()
+    assert len(sets) == 2
+    strength = next(s for s in sets if s.weight is not None)
+    assert strength.weight == 20.0
+    assert strength.reps == 5
+    assert strength.distance_km is None
+    assert strength.duration_seconds is None
+
+    cardio = next(s for s in sets if s.distance_km is not None)
+    assert cardio.distance_km == 2.0
+    assert cardio.duration_seconds == 600
+    assert cardio.weight is None
+    assert cardio.reps is None
+
+
 def test_import_csv_discards_existing_set(client: TestClient, db_session: Session) -> None:
     """Re-importing a workout with changed set data should discard the set, not update."""
     with open(FIXTURES_DIR / "sample_hevy.csv", "rb") as f:

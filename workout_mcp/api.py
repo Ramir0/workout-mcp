@@ -193,6 +193,8 @@ def import_csv(
                                 reps=parsed_set.reps,
                                 weight=parsed_set.weight,
                                 rpe=parsed_set.rpe,
+                                distance_km=parsed_set.distance_km,
+                                duration_seconds=parsed_set.duration_seconds,
                             )
                             db.add(set_)
                             sets_created += 1
