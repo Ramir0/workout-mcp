@@ -10,7 +10,7 @@ RUN uv sync --frozen --no-dev
 COPY alembic/ alembic.ini ./
 COPY . .
 
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 9090
