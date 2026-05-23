@@ -17,15 +17,15 @@ The Workout MCP Server acts as a centralized data hub for fitness tracking, allo
 ### MCP Tools for AI Agents
 The server exposes the following query tools to enable AI agents to interact with workout data:
 
-| Tool | Description |
-|------|-------------|
-| `get_workout_by_date_range` | Retrieve workouts within a specified date range |
-| `get_workout_by_routine` | Retrieve workouts filtered by routine name |
-| `get_workout_by_exercise` | Retrieve workouts containing a specific exercise |
-| `get_workout_count` | Get the total count of workouts or filtered counts |
-| `get_min_pr_by_exercise` | Get the minimum personal record for a given exercise |
-| `get_max_pr_by_exercise` | Get the maximum personal record for a given exercise |
-| `get_last_workout` | Get last workout for all exercises or filtered exercise |
+| Tool | Title | Description |
+|------|-------|-------------|
+| `get_workout_by_date_range` | Get Workouts by Date Range | Retrieve all workout sessions that occurred between two dates. Use this when the user asks about workouts during a specific time period, such as "last week" or "this month". |
+| `get_workout_by_routine` | Get Workouts by Routine | Retrieve all workouts that follow a specific routine template. Use this when the user asks about a named workout plan like "Push Day" or "Upper Body". |
+| `get_workout_by_exercise` | Get Workouts by Exercise | Retrieve all workout sessions that include a specific exercise. Use this when the user asks about training history for a particular movement like "Bench Press" or "Squat". |
+| `get_workout_count` | Count Workouts | Count the total number of workouts, optionally filtered by date range or routine name. Use this when the user asks "how many workouts" or wants to check training frequency. |
+| `get_min_pr_by_exercise` | Get Min PR by Exercise | Find the lightest best-set weight recorded for an exercise. Use this when the user asks for their lightest PR or wants to see early performance data. |
+| `get_max_pr_by_exercise` | Get Max PR by Exercise | Find the heaviest single set ever recorded for an exercise. Use this when the user asks for their personal record, max weight, or heaviest lift. |
+| `get_last_workout` | Get Last Workout | Retrieve the most recent workout session. Optionally filter by a specific exercise to find when it was last performed. Use this when the user asks "what was my last workout" or "when did I last do X". |
 
 ## Database Schema
 
