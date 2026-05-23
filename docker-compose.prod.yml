@@ -1,37 +1,45 @@
 services:
   api:
     build: .
+    container_name: workout-mcp-api
     ports:
       - "9090:9090"
     env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/workout_mcp
+      - .env.docker
     depends_on:
       - db
+    networks:
+      - workout-mcp-network
 
   mcp:
     build: .
+    container_name: workout-mcp-server
     ports:
       - "9091:9091"
     command: ["uv", "run", "uvicorn", "mcp_server_main:app", "--host", "0.0.0.0", "--port", "9091"]
     env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/workout_mcp
+      - .env.docker
     depends_on:
       - db
+    networks:
+      - workout-mcp-network
 
   db:
     image: postgres:16-alpine
+    container_name: workout-mcp-db
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=${DATABASE_USER:-postgres}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD:-postgres}
       - POSTGRES_DB=workout_mcp
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - workout-mcp-network
 
 volumes:
   pgdata:
+
+networks:
+  workout-mcp-network:
