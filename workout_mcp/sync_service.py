@@ -67,7 +67,8 @@ def upsert_hevy_workout(db: Session, hevy_data: dict[str, Any]) -> None:
     for we in workout_exercises:
         exercise_name = we.exercise.name
         persisted_exercise = db.query(Exercise).filter_by(name=exercise_name).first()
-        assert persisted_exercise is not None
+        if persisted_exercise is None:
+            raise RuntimeError(f"Exercise {exercise_name!r} not found after upsert")
         we.exercise = persisted_exercise
 
     # Now wire the workout to the persisted routine and add it.  Cascade on

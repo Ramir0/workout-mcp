@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -116,7 +117,7 @@ async def _process_event(db: Session, client: HevyClient, event: dict[str, Any])
         logger.warning("sync_unknown_event_type", event_type=event_type)
 
 
-def start_scheduler(db_factory: Any) -> AsyncIOScheduler | None:
+def start_scheduler(db_factory: Callable[[], Session]) -> AsyncIOScheduler | None:
     """Start the APScheduler with the fallback sync job."""
     if not settings.hevy_api_key:
         logger.info("scheduler_not_started_no_api_key")
