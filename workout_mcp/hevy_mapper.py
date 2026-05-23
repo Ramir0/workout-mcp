@@ -8,13 +8,20 @@ from typing import Any
 from workout_mcp.models import Exercise, Routine, Set, Workout, WorkoutExercise
 
 
+class MapperError(ValueError):
+    """Raised when Hevy data cannot be mapped to ORM models."""
+
+
 def parse_datetime(value: str | None) -> datetime | None:
     """Parse an ISO 8601 datetime string to a timezone-aware datetime."""
     if value is None:
         return None
     if value.endswith("Z"):
         value = value[:-1] + "+00:00"
-    dt = datetime.fromisoformat(value)
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise MapperError(f"Invalid datetime string: {value!r}") from exc
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=UTC)
     return dt
@@ -30,8 +37,17 @@ def map_hevy_workout_to_models(
     """
     title = hevy_data.get("title") or "Untitled Workout"
     description = hevy_data.get("description")
-    start_time = parse_datetime(hevy_data.get("start_time"))
-    end_time = parse_datetime(hevy_data.get("end_time"))
+
+    start_time_raw = hevy_data.get("start_time")
+    if start_time_raw is None:
+        raise MapperError("Missing required field: start_time")
+    start_time = parse_datetime(start_time_raw)
+
+    end_time_raw = hevy_data.get("end_time")
+    if end_time_raw is None:
+        raise MapperError("Missing required field: end_time")
+    end_time = parse_datetime(end_time_raw)
+
     updated_at = parse_datetime(hevy_data.get("updated_at"))
     routine_name = hevy_data.get("routine_name") or title
 
@@ -49,7 +65,7 @@ def map_hevy_workout_to_models(
     workout_exercises: list[WorkoutExercise] = []
     sets: list[Set] = []
 
-    for exercise_index, exercise_data in enumerate(hevy_data.get("exercises", [])):
+    for exercise_index, exercise_data in enumerate(hevy_data.get("exercises") or []):
         exercise_name = exercise_data.get("title") or "Unknown Exercise"
         exercise = Exercise(name=exercise_name)
         exercises.append(exercise)
@@ -61,7 +77,7 @@ def map_hevy_workout_to_models(
         )
         workout_exercises.append(workout_exercise)
 
-        for set_data in exercise_data.get("sets", []):
+        for set_data in exercise_data.get("sets") or []:
             weight = set_data.get("weight_kg")
             reps = set_data.get("reps")
             rpe = set_data.get("rpe")
@@ -70,9 +86,13 @@ def map_hevy_workout_to_models(
 
             distance_km = distance_meters / 1000.0 if distance_meters is not None else None
 
+            set_number = set_data.get("set_number")
+            if set_number is None:
+                raise MapperError("Missing required field in set: set_number")
+
             set_ = Set(
                 workout_exercise=workout_exercise,
-                set_index=set_data.get("set_number", 0),
+                set_index=set_number,
                 reps=reps,
                 weight=weight,
                 rpe=rpe,
