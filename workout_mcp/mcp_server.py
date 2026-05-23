@@ -86,7 +86,10 @@ def _get_workout_by_date_range(
     return [_serialize_workout(w) for w in workouts]
 
 
-@mcp.tool()
+@mcp.tool(
+    title="Get Workouts by Date Range",
+    description="Retrieve all workout sessions that occurred between two dates. Use this when the user asks about workouts during a specific time period, such as 'last week' or 'this month'.",
+)
 def get_workout_by_date_range(
     start_date: str, end_date: str
 ) -> list[dict[str, object]] | dict[str, str]:
@@ -127,7 +130,10 @@ def _get_workout_by_routine(db: Session, routine_name: str) -> list[dict[str, ob
     return [_serialize_workout(w) for w in workouts]
 
 
-@mcp.tool()
+@mcp.tool(
+    title="Get Workouts by Routine",
+    description="Retrieve all workouts that follow a specific routine template. Use this when the user asks about a named workout plan like 'Push Day' or 'Upper Body'.",
+)
 def get_workout_by_routine(routine_name: str) -> list[dict[str, object]] | dict[str, str]:
     """Retrieve all workouts for a given routine name.
 
@@ -163,7 +169,10 @@ def _get_workout_by_exercise(db: Session, exercise_name: str) -> list[dict[str, 
     return [_serialize_workout(w) for w in workouts]
 
 
-@mcp.tool()
+@mcp.tool(
+    title="Get Workouts by Exercise",
+    description="Retrieve all workout sessions that include a specific exercise. Use this when the user asks about training history for a particular movement like 'Bench Press' or 'Squat'.",
+)
 def get_workout_by_exercise(exercise_name: str) -> list[dict[str, object]] | dict[str, str]:
     """Retrieve all workouts that contain a specific exercise.
 
@@ -201,7 +210,10 @@ def _get_workout_count(
     return db.execute(stmt).scalar() or 0
 
 
-@mcp.tool()
+@mcp.tool(
+    title="Count Workouts",
+    description="Count the total number of workouts, optionally filtered by date range or routine name. Use this when the user asks 'how many workouts' or wants to check training frequency.",
+)
 def get_workout_count(
     start_date: str = "",
     end_date: str = "",
@@ -252,7 +264,10 @@ def _get_last_workout(db: Session, exercise_name: str = "") -> dict[str, object]
     return _serialize_workout(workout)
 
 
-@mcp.tool()
+@mcp.tool(
+    title="Get Last Workout",
+    description="Retrieve the most recent workout session. Optionally filter by a specific exercise to find when it was last performed. Use this when the user asks 'what was my last workout' or 'when did I last do X'.",
+)
 def get_last_workout(exercise_name: str = "") -> dict[str, object]:
     """Get the most recent workout, optionally filtered by exercise.
 
@@ -318,7 +333,10 @@ def _get_max_pr_by_exercise(db: Session, exercise_name: str) -> dict[str, object
     }
 
 
-@mcp.tool()
+@mcp.tool(
+    title="Get Max PR by Exercise",
+    description="Find the heaviest single set ever recorded for an exercise. Use this when the user asks for their personal record, max weight, or heaviest lift.",
+)
 def get_max_pr_by_exercise(exercise_name: str) -> dict[str, object]:
     """Get the maximum personal record (heaviest best-set weight) for an exercise.
 
@@ -390,7 +408,10 @@ def _get_min_pr_by_exercise(db: Session, exercise_name: str) -> dict[str, object
     }
 
 
-@mcp.tool()
+@mcp.tool(
+    title="Get Min PR by Exercise",
+    description="Find the lightest best-set weight recorded for an exercise. Use this when the user asks for their lightest PR or wants to see early performance data.",
+)
 def get_min_pr_by_exercise(exercise_name: str) -> dict[str, object]:
     """Get the minimum personal record (lightest best-set weight) for an exercise.
 
