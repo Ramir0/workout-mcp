@@ -184,14 +184,133 @@ python main.py
 python mcp_server_main.py
 ```
 
+### API Authentication (Signature Verification)
+
+When `HEVY_WEBHOOK_SECRET` is configured, **all REST API endpoints require signature verification**. Every request must include a valid `X-Hevy-Signature` header computed as the HMAC-SHA256 hex digest of the raw request body.
+
+If the signature is missing or invalid, the server responds with `400 Bad Request`.
+
+**To disable signature verification**, leave `HEVY_WEBHOOK_SECRET` unset (default).
+
+#### How to Compute the Signature
+
+1. Take the raw request body (exact bytes as sent over the wire).
+2. Compute `HMAC-SHA256(body, HEVY_WEBHOOK_SECRET)`.
+3. Send the result as the `X-Hevy-Signature` header (hex string, no prefix).
+
+#### Example with cURL (JSON endpoint)
+
+```bash
+BODY='{"workoutId":"abc123"}'
+SIGNATURE=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "your-hevy-webhook-secret" | sed 's/^.* //')
+
+curl -X POST http://localhost:9090/webhooks/hevy \
+  -H "Content-Type: application/json" \
+  -H "X-Hevy-Signature: $SIGNATURE" \
+  -d "$BODY"
+```
+
+#### Example with cURL (multipart file upload)
+
+For file uploads, the signature is computed over the entire multipart body (including boundaries). The easiest way is to write the body to a file first:
+
+```bash
+# Build the multipart payload manually
+cat > /tmp/payload.txt <<'EOF'
+------Boundary123
+Content-Disposition: form-data; name="file"; filename="hevy_export.csv"
+Content-Type: text/csv
+
+<paste CSV content here>
+------Boundary123--
+EOF
+
+SIGNATURE=$(openssl dgst -sha256 -hmac "your-hevy-webhook-secret" /tmp/payload.txt | sed 's/^.* //')
+
+curl -X POST http://localhost:9090/import/csv \
+  -H "Content-Type: multipart/form-data; boundary=----Boundary123" \
+  -H "X-Hevy-Signature: $SIGNATURE" \
+  --data-binary @/tmp/payload.txt
+```
+
+> **Note**: Most HTTP clients (including `curl -F`) construct multipart bodies dynamically, making it hard to pre-compute the signature. For programmatic access, build the multipart payload manually or use a client library that supports request signing.
+
+---
+
 ### Importing Hevy CSV Data
 
 Export your workout data from the Hevy app and use the REST API endpoint to import:
 
 ```bash
+# Without signature verification (HEVY_WEBHOOK_SECRET not set)
 curl -X POST http://localhost:9090/import/csv \
   -F "file=@hevy_export.csv"
 ```
+
+When `HEVY_WEBHOOK_SECRET` is configured, include the `X-Hevy-Signature` header as described in [API Authentication](#api-authentication-signature-verification).
+
+---
+
+### Hevy Webhook Integration
+
+Receive real-time workout updates from Hevy via webhooks instead of manually importing CSV files.
+
+#### 1. Configure Environment Variables
+
+Add the following to your `.env` file:
+
+```bash
+HEVY_API_KEY=your-hevy-api-key
+HEVY_WEBHOOK_SECRET=your-hevy-webhook-secret
+```
+
+- `HEVY_API_KEY`: Your personal Hevy API key (available in Hevy app settings). Required for the server to fetch workout details when a webhook is received.
+- `HEVY_WEBHOOK_SECRET`: A shared secret string that you and Hevy agree on to verify webhook authenticity. **Keep this secret secure** — anyone with this secret can forge webhook requests. When set, it applies to **all** REST API endpoints (not just webhooks).
+
+#### 2. Configure the Webhook URL in Hevy
+
+In the Hevy app or developer portal, set your webhook URL to:
+
+```
+https://your-server-domain.com/webhooks/hevy
+```
+
+Make sure this URL is publicly accessible (use a reverse proxy or tunnel like ngrok for local development).
+
+#### 3. Webhook Request Format
+
+When a workout is created or updated, Hevy sends a `POST` request to `/webhooks/hevy` with:
+
+**Headers:**
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `Content-Type` | `application/json` | JSON payload |
+| `X-Hevy-Signature` | `<hex>` | HMAC-SHA256 hex digest of the raw request body, using `HEVY_WEBHOOK_SECRET` as the key. **Required when `HEVY_WEBHOOK_SECRET` is configured.** |
+
+**Body:**
+
+```json
+{
+  "workoutId": "abc123"
+}
+```
+
+#### 4. Webhook Processing Flow
+
+```mermaid
+flowchart LR
+    H[Hevy App] -->|POST /webhooks/hevy| W[Workout MCP Server]
+    W -->|Verify Signature| V{Valid?}
+    V -->|No| R1[400 Bad Request]
+    V -->|Yes| P[Queue Background Task]
+    P --> F[Fetch Workout from Hevy API]
+    F --> U[Upsert into Database]
+```
+
+- The endpoint responds immediately with `{"status": "ok"}` (HTTP 200) after signature verification.
+- The actual workout fetch and database upsert happen asynchronously in a background task.
+- If `HEVY_API_KEY` is not configured, the endpoint returns `503 Service Unavailable`.
 
 ### MCP Client Configuration
 
@@ -268,6 +387,9 @@ All settings are managed via `pydantic-settings` with `.env` file auto-loading.
 | `TEST_DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/workout_mcp_test` | Test database connection string |
 | `APP_PORT` | `9090` | Port for the REST API server |
 | `MCP_PORT` | `9091` | Port for the MCP server |
+| `HEVY_API_KEY` | `None` | Hevy API key (required for webhook sync and automatic fetching) |
+| `HEVY_WEBHOOK_SECRET` | `None` | Shared secret for verifying Hevy webhook signatures |
+| `HEVY_BASE_URL` | `https://api.hevyapp.com` | Hevy API base URL |
 | `LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 | `LOG_FORMAT` | `console` | Log output format (`console` for dev, `json` for production) |
 

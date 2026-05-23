@@ -95,6 +95,24 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class SignatureVerificationMiddleware(BaseHTTPMiddleware):
+    """Verify X-Hevy-Signature on all requests when HEVY_WEBHOOK_SECRET is configured."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if settings.hevy_webhook_secret:
+            body = await request.body()
+            signature = request.headers.get("X-Hevy-Signature")
+            if not _verify_webhook_signature(body, signature, settings.hevy_webhook_secret):
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Invalid signature"},
+                )
+            # Cache body so downstream consumers (e.g., request.json(), UploadFile) can re-read it
+            request._body = body
+        return await call_next(request)
+
+
+app.add_middleware(SignatureVerificationMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 
@@ -277,17 +295,11 @@ async def hevy_webhook(
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
     """Receive Hevy webhook notifications."""
-    body = await request.body()
     data = await request.json()
     workout_id = data.get("workoutId")
 
     if not workout_id:
         raise HTTPException(status_code=400, detail="Missing workoutId")
-
-    if settings.hevy_webhook_secret:
-        signature = request.headers.get("X-Hevy-Signature")
-        if not _verify_webhook_signature(body, signature, settings.hevy_webhook_secret):
-            raise HTTPException(status_code=400, detail="Invalid signature")
 
     if not settings.hevy_api_key:
         raise HTTPException(status_code=503, detail="Hevy API not configured")
