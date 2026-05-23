@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import io
 import time
 import uuid
 from collections.abc import Generator
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -15,10 +17,13 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from workout_mcp.config import settings
 from workout_mcp.database import SessionLocal
+from workout_mcp.hevy_client import HevyAPIError, HevyClient
 from workout_mcp.logging import get_logger
 from workout_mcp.models import Exercise, Routine, Set, Workout, WorkoutExercise
 from workout_mcp.parser import ParseError, parse_hevy_csv
+from workout_mcp.sync_service import upsert_hevy_workout
 
 logger = get_logger(__name__)
 
@@ -218,3 +223,63 @@ def import_csv(
             "sets": sets_discarded,
         },
     }
+
+
+def _verify_webhook_signature(body: bytes, signature: str | None, secret: str) -> bool:
+    if signature is None:
+        return False
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
+async def _process_webhook_workout(workout_id: str) -> None:
+    """Background task to fetch and upsert a Hevy workout."""
+    logger = get_logger(__name__)
+    if not settings.hevy_api_key:
+        logger.warning("webhook_skipped_no_api_key")
+        return
+
+    try:
+        async with HevyClient() as client:
+            workout_data = await client.get_workout(workout_id)
+    except HevyAPIError as exc:
+        logger.error("webhook_fetch_failed", workout_id=workout_id, error=str(exc))
+        return
+
+    from workout_mcp.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        upsert_hevy_workout(db, workout_data)
+        db.commit()
+        logger.info("webhook_workout_upserted", workout_id=workout_id)
+    except Exception as exc:
+        db.rollback()
+        logger.error("webhook_upsert_failed", workout_id=workout_id, error=str(exc))
+    finally:
+        db.close()
+
+
+@app.post("/webhooks/hevy")
+async def hevy_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    """Receive Hevy webhook notifications."""
+    body = await request.body()
+    data = await request.json()
+    workout_id = data.get("workoutId")
+
+    if not workout_id:
+        raise HTTPException(status_code=400, detail="Missing workoutId")
+
+    if settings.hevy_webhook_secret:
+        signature = request.headers.get("X-Hevy-Signature")
+        if not _verify_webhook_signature(body, signature, settings.hevy_webhook_secret):
+            raise HTTPException(status_code=400, detail="Invalid signature")
+
+    if not settings.hevy_api_key:
+        raise HTTPException(status_code=503, detail="Hevy API not configured")
+
+    background_tasks.add_task(_process_webhook_workout, workout_id)
+    return {"status": "ok"}
