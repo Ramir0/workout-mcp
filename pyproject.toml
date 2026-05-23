@@ -16,6 +16,7 @@ dependencies = [
     "uvicorn>=0.32",
     "structlog>=24.1.0",
     "pydantic-settings>=2.0.0",
+    "apscheduler>=3.10,<4.0",
 ]
 
 [build-system]

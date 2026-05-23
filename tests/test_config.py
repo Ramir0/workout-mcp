@@ -61,3 +61,23 @@ def test_mcp_port_setting() -> None:
 
     settings = Settings()
     assert settings.mcp_port == 9091
+
+
+def test_hevy_config_fields() -> None:
+    """Settings includes Hevy API configuration fields."""
+    from workout_mcp.config import Settings
+
+    with patch.dict(
+        os.environ,
+        {
+            "HEVY_API_KEY": "test-api-key-123",
+            "HEVY_BASE_URL": "https://api.hevyapp.com",
+            "HEVY_WEBHOOK_SECRET": "super-secret",
+            "HEVY_SYNC_INTERVAL_MINUTES": "60",
+        },
+    ):
+        settings = Settings()
+        assert settings.hevy_api_key == "test-api-key-123"
+        assert settings.hevy_base_url == "https://api.hevyapp.com"
+        assert settings.hevy_webhook_secret == "super-secret"
+        assert settings.hevy_sync_interval_minutes == 60

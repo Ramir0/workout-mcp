@@ -5,6 +5,8 @@ services:
       - "9090:9090"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/workout_mcp
     depends_on:
       - db
 
@@ -15,6 +17,8 @@ services:
     command: ["uv", "run", "uvicorn", "mcp_server_main:app", "--host", "0.0.0.0", "--port", "9091"]
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/workout_mcp
     depends_on:
       - db
 

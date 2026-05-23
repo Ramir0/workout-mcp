@@ -34,6 +34,9 @@ class Workout(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     start: Mapped[datetime]
     end: Mapped[datetime]
+    title: Mapped[str | None] = mapped_column(default=None)
+    description: Mapped[str | None] = mapped_column(default=None)
+    updated_at: Mapped[datetime | None] = mapped_column(default=None)
     routine_id: Mapped[int] = mapped_column(ForeignKey("routine.id"))
 
     __table_args__ = (UniqueConstraint("routine_id", "start", "end"),)
@@ -103,3 +106,14 @@ class Set(Base):
             f"reps={self.reps!r}, weight={self.weight!r}, "
             f"distance_km={self.distance_km!r}, duration_seconds={self.duration_seconds!r})"
         )
+
+
+class SyncState(Base):
+    __tablename__ = "sync_state"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    last_sync_at: Mapped[datetime | None] = mapped_column(default=None)
+    updated_at: Mapped[datetime | None] = mapped_column(default=None)
+
+    def __repr__(self) -> str:
+        return f"SyncState(id={self.id!r}, last_sync_at={self.last_sync_at!r})"
