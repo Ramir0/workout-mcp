@@ -1,6 +1,7 @@
 """Pytest fixtures and configuration."""
 
 from collections.abc import Generator
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,6 +10,13 @@ from sqlalchemy.orm import Session, SessionTransaction, sessionmaker
 
 from workout_mcp.config import settings
 from workout_mcp.models import Base
+
+
+@pytest.fixture(autouse=True)
+def _reset_webhook_secret() -> Generator[None]:
+    """Ensure HEVY_WEBHOOK_SECRET is unset during tests so the signature middleware is bypassed."""
+    with patch.object(settings, "hevy_webhook_secret", None):
+        yield
 
 
 @pytest.fixture(scope="session")

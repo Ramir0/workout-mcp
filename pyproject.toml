@@ -66,6 +66,13 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 ignore_missing_imports = true
+exclude = [
+    "^activate/",
+    '^\.venv/',
+    '^\.git/',
+    '^\.mypy_cache/',
+    "^__pycache__/",
+]
 
 [[tool.mypy.overrides]]
 module = ["alembic.*"]
