@@ -8,9 +8,6 @@ from typing import Any, cast
 import httpx
 
 from workout_mcp.config import settings
-from workout_mcp.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class HevyAPIError(Exception):
