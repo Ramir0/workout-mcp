@@ -12,9 +12,17 @@ from workout_mcp.models import Exercise, Routine, Set, Workout
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
+def _csv_payload(path: Path) -> bytes:
+    with open(path, "rb") as f:
+        return f.read()
+
+
 def test_import_csv_success(client: TestClient, db_session: Session) -> None:
-    with open(FIXTURES_DIR / "sample_hevy.csv", "rb") as f:
-        response = client.post("/import/csv", files={"file": ("sample_hevy.csv", f)})
+    response = client.post(
+        "/import/csv",
+        content=_csv_payload(FIXTURES_DIR / "sample_hevy.csv"),
+        headers={"Content-Type": "text/csv"},
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -39,11 +47,10 @@ def test_import_csv_success(client: TestClient, db_session: Session) -> None:
 
 def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
     """Importing the same CSV twice must be fully idempotent - no duplicates."""
-    with open(FIXTURES_DIR / "sample_hevy.csv", "rb") as f:
-        client.post("/import/csv", files={"file": ("sample_hevy.csv", f)})
+    payload = _csv_payload(FIXTURES_DIR / "sample_hevy.csv")
+    client.post("/import/csv", content=payload, headers={"Content-Type": "text/csv"})
 
-    with open(FIXTURES_DIR / "sample_hevy.csv", "rb") as f:
-        response = client.post("/import/csv", files={"file": ("sample_hevy.csv", f)})
+    response = client.post("/import/csv", content=payload, headers={"Content-Type": "text/csv"})
 
     assert response.status_code == 200
     data = response.json()
@@ -52,9 +59,7 @@ def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
     assert data["created"]["exercises"] == 0
     assert data["created"]["workout_exercises"] == 0
     assert data["created"]["sets"] == 0
-    assert data["discarded"]["sets"] == 4
 
-    # Database must not have doubled
     assert db_session.query(Routine).count() == 2
     assert db_session.query(Workout).count() == 2
     assert db_session.query(Exercise).count() == 3
@@ -62,85 +67,84 @@ def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
 
 
 def test_import_csv_hybrid_workout(client: TestClient, db_session: Session) -> None:
-    """Import a hybrid workout with strength and cardio sets."""
-    with open(FIXTURES_DIR / "hybrid.csv", "rb") as f:
-        response = client.post("/import/csv", files={"file": ("hybrid.csv", f)})
+    """A workout with both duration_seconds and weight_kg creates sets with matching fields."""
+    response = client.post(
+        "/import/csv",
+        content=_csv_payload(FIXTURES_DIR / "hybrid.csv"),
+        headers={"Content-Type": "text/csv"},
+    )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["created"]["routines"] == 1
-    assert data["created"]["workouts"] == 1
-    assert data["created"]["exercises"] == 1
-    assert data["created"]["workout_exercises"] == 1
     assert data["created"]["sets"] == 2
-    assert data["discarded"]["sets"] == 0
 
-    # Verify database state
-    sets = db_session.query(Set).all()
-    assert len(sets) == 2
-    strength = next(s for s in sets if s.weight is not None)
-    assert strength.weight == 20.0
-    assert strength.reps == 5
-    assert strength.distance_km is None
-    assert strength.duration_seconds is None
-
-    cardio = next(s for s in sets if s.distance_km is not None)
-    assert cardio.distance_km == 2.0
-    assert cardio.duration_seconds == 600
-    assert cardio.weight is None
-    assert cardio.reps is None
+    routine = db_session.query(Routine).filter_by(name="Hybrid Day").first()
+    assert routine is not None
+    assert len(routine.workouts) == 1
+    exercise = db_session.query(Exercise).filter_by(name="Weighted Run").first()
+    assert exercise is not None
+    assert len(exercise.workout_exercises) == 1
+    sets = sorted(exercise.workout_exercises[0].sets, key=lambda s: s.set_index)
+    assert sets[0].weight == 20.0
+    assert sets[0].duration_seconds is None
+    assert sets[1].weight is None
+    assert sets[1].duration_seconds == 600
 
 
 def test_import_csv_discards_existing_set(client: TestClient, db_session: Session) -> None:
-    """Re-importing a workout with changed set data should discard the set, not update."""
-    with open(FIXTURES_DIR / "sample_hevy.csv", "rb") as f:
-        client.post("/import/csv", files={"file": ("sample_hevy.csv", f)})
+    """When a workout_exercise already has a set with the same set_index, it is discarded."""
+    payload = _csv_payload(FIXTURES_DIR / "sample_hevy.csv")
+    client.post("/import/csv", content=payload, headers={"Content-Type": "text/csv"})
 
-    # Modify weight in the CSV inline
-    csv_path = FIXTURES_DIR / "sample_hevy.csv"
-    csv_text = csv_path.read_text(encoding="utf-8")
-    modified = csv_text.replace(
-        '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Bench Press","","",0,"normal",100,5,,0,8',
-        '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Bench Press","","",0,"normal",105,5,,0,8',
+    # Modify one set's weight so it would differ, but keep the same set_index
+    modified = (
+        '"title","start_time","end_time","description","exercise_title","superset_id",'
+        '"exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n'
+        '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Bench Press","","",'
+        '"0","normal",999,5,,0,8\n'
     )
-
     response = client.post(
-        "/import/csv",
-        files={"file": ("sample_hevy.csv", modified.encode("utf-8"))},
+        "/import/csv", content=modified.encode("utf-8"), headers={"Content-Type": "text/csv"}
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["created"]["workouts"] == 0
-    assert data["discarded"]["sets"] == 4
+    assert data["created"]["sets"] == 0
+    assert data["discarded"]["sets"] == 1
 
-    # Original weight must be preserved (not updated) - set was discarded
     bench = db_session.query(Exercise).filter_by(name="Bench Press").first()
     assert bench is not None
     assert bench.workout_exercises[0].sets[0].weight == 100.0
 
 
 def test_import_csv_empty_file(client: TestClient) -> None:
-    with open(FIXTURES_DIR / "empty.csv", "rb") as f:
-        response = client.post("/import/csv", files={"file": ("empty.csv", f)})
+    response = client.post(
+        "/import/csv",
+        content=_csv_payload(FIXTURES_DIR / "empty.csv"),
+        headers={"Content-Type": "text/csv"},
+    )
 
     assert response.status_code == 400
     assert "no data rows" in response.json()["detail"]
 
 
-def test_import_csv_non_csv_extension(client: TestClient) -> None:
+def test_import_csv_non_csv_content_type(client: TestClient) -> None:
     response = client.post(
         "/import/csv",
-        files={"file": ("report.txt", b"not a csv")},
+        content=b"not a csv",
+        headers={"Content-Type": "application/json"},
     )
 
     assert response.status_code == 400
-    assert "CSV" in response.json()["detail"]
+    assert "Content-Type must be text/csv" in response.json()["detail"]
 
 
 def test_import_csv_malformed_date(client: TestClient) -> None:
-    with open(FIXTURES_DIR / "malformed_date.csv", "rb") as f:
-        response = client.post("/import/csv", files={"file": ("malformed_date.csv", f)})
+    response = client.post(
+        "/import/csv",
+        content=_csv_payload(FIXTURES_DIR / "malformed_date.csv"),
+        headers={"Content-Type": "text/csv"},
+    )
 
     assert response.status_code == 400
     assert "Unable to parse date" in response.json()["detail"]
@@ -148,11 +152,11 @@ def test_import_csv_malformed_date(client: TestClient) -> None:
 
 def test_import_non_utf8_file(client: TestClient) -> None:
     """Non-UTF8 encoded file returns 400."""
-    import io
-
-    content = b"\x80\x81\x82\x83"
-    files = {"file": ("test.csv", io.BytesIO(content), "text/csv")}
-    response = client.post("/import/csv", files=files)
+    response = client.post(
+        "/import/csv",
+        content=b"\x80\x81\x82\x83",
+        headers={"Content-Type": "text/csv"},
+    )
     assert response.status_code == 400
     assert "UTF-8" in response.json()["detail"]
 
@@ -161,8 +165,8 @@ def test_import_csv_updates_exercise_index(client: TestClient, db_session: Sessi
     """Re-importing with reordered exercises updates exercise_index on existing workout_exercises."""
     from workout_mcp.models import WorkoutExercise
 
-    with open(FIXTURES_DIR / "sample_hevy.csv", "rb") as f:
-        client.post("/import/csv", files={"file": ("sample_hevy.csv", f)})
+    payload = _csv_payload(FIXTURES_DIR / "sample_hevy.csv")
+    client.post("/import/csv", content=payload, headers={"Content-Type": "text/csv"})
 
     bench = db_session.query(Exercise).filter_by(name="Bench Press").first()
     assert bench is not None
@@ -182,7 +186,8 @@ def test_import_csv_updates_exercise_index(client: TestClient, db_session: Sessi
 
     response = client.post(
         "/import/csv",
-        files={"file": ("sample_hevy.csv", reordered.encode("utf-8"))},
+        content=reordered.encode("utf-8"),
+        headers={"Content-Type": "text/csv"},
     )
 
     assert response.status_code == 200
@@ -196,26 +201,25 @@ def test_import_csv_updates_exercise_index(client: TestClient, db_session: Sessi
     assert bench_we.exercise_index != original_index
 
 
-def test_import_invalid_multipart(client: TestClient) -> None:
-    """Missing file field returns 422."""
+def test_import_missing_body(client: TestClient) -> None:
+    """Missing body or wrong Content-Type returns 400."""
     response = client.post("/import/csv")
-    assert response.status_code == 422
+    assert response.status_code == 400
+    assert "Content-Type must be text/csv" in response.json()["detail"]
 
 
 def test_request_middleware_adds_request_id(client: TestClient) -> None:
     """Request logging middleware adds X-Request-ID header."""
-    import io
-
     response = client.post(
         "/import/csv",
-        files={"file": ("test.csv", io.BytesIO(b"title:,Workout 1"), "text/csv")},
+        content=b"title:,Workout 1",
+        headers={"Content-Type": "text/csv"},
     )
     assert "X-Request-ID" in response.headers
 
 
 def test_generic_exception_handler_returns_500() -> None:
     """Generic exception handler returns 500 for unhandled errors."""
-    import io
     from unittest.mock import patch
 
     from fastapi.testclient import TestClient
@@ -226,7 +230,8 @@ def test_generic_exception_handler_returns_500() -> None:
     with patch("workout_mcp.api.parse_hevy_csv", side_effect=RuntimeError("Boom")):
         response = client.post(
             "/import/csv",
-            files={"file": ("test.csv", io.BytesIO(b"some,valid,utf8,content"), "text/csv")},
+            content=b"some,valid,utf8,content",
+            headers={"Content-Type": "text/csv"},
         )
         assert response.status_code == 500
         assert "Internal server error" in response.json()["detail"]

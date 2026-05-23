@@ -470,13 +470,34 @@ export DATABASE_PASSWORD=<secure-password>
 docker compose -f docker-compose.prod.yml run --rm api uv run alembic upgrade head
 ```
 
-3. Start all services:
+3. Build and start all services:
 ```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+To build **without cache** (clean rebuild):
+```bash
+docker compose -f docker-compose.prod.yml build --no-cache
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-4. Verify REST API: `curl -X POST http://localhost:9090/import/csv -F "file=@hevy_export.csv"`
-5. Verify MCP Server: `curl http://localhost:9091`
+Or in one command:
+```bash
+docker compose -f docker-compose.prod.yml up -d --build --no-cache
+```
+
+4. View logs:
+```bash
+docker compose -f docker-compose.prod.yml logs -f
+```
+
+5. Stop services:
+```bash
+docker compose -f docker-compose.prod.yml down
+```
+
+6. Verify REST API: `curl -X POST http://localhost:9090/import/csv -F "file=@hevy_export.csv"`
+7. Verify MCP Server: `curl http://localhost:9091`
 
 The host's HTTP server should reverse proxy to `localhost:8000`.
 

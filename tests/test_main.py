@@ -18,4 +18,4 @@ def test_health_endpoint() -> None:
 
     client = TestClient(app)
     response = client.post("/import/csv")
-    assert response.status_code == 422
+    assert response.status_code == 400

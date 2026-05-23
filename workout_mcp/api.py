@@ -10,7 +10,7 @@ import uuid
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -126,16 +126,18 @@ def get_db() -> Generator[Session]:
 
 
 @app.post("/import/csv")
-def import_csv(
-    file: UploadFile = File(...),  # noqa: B008
+async def import_csv(
+    request: Request,
     db: Session = Depends(get_db),  # noqa: B008
 ) -> dict[str, dict[str, int]]:
     """Import a Hevy CSV export into the database."""
-    if not file.filename or not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="File must be a CSV")
+    content_type = request.headers.get("content-type", "")
+    if "csv" not in content_type:
+        raise HTTPException(status_code=400, detail="Content-Type must be text/csv")
 
+    body = await request.body()
     try:
-        content = file.file.read().decode("utf-8")
+        content = body.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise HTTPException(status_code=400, detail="File must be UTF-8 encoded") from exc
 
