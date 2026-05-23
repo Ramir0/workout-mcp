@@ -88,7 +88,9 @@ def map_hevy_workout_to_models(
 
             set_number = set_data.get("set_number")
             if set_number is None:
-                raise MapperError("Missing required field in set: set_number")
+                set_number = set_data.get("index")
+            if set_number is None:
+                raise MapperError("Missing required field in set: set_number or index")
 
             set_ = Set(
                 workout_exercise=workout_exercise,

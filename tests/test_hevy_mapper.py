@@ -226,7 +226,7 @@ def test_null_set_number() -> None:
             }
         ],
     }
-    with pytest.raises(MapperError, match="Missing required field in set: set_number"):
+    with pytest.raises(MapperError, match="Missing required field in set: set_number or index"):
         map_hevy_workout_to_models(hevy_data)
 
 
