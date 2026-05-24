@@ -13,7 +13,7 @@ from workout_mcp.models import Base
 
 
 @pytest.fixture(autouse=True)
-def _reset_webhook_secret() -> Generator[None]:
+def _reset_api_key() -> Generator[None]:
     """Ensure REST_API_KEY is unset during tests so the API key middleware is bypassed."""
     with patch.object(settings, "rest_api_key", None):
         yield
