@@ -95,12 +95,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 class ApiKeyMiddleware(BaseHTTPMiddleware):
-    """Verify X-API-Key header on all requests when HEVY_WEBHOOK_SECRET is configured."""
+    """Verify X-API-Key header on all requests when REST_API_KEY is configured."""
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        if settings.hevy_webhook_secret:
+        if settings.rest_api_key:
             api_key = request.headers.get("X-API-Key")
-            if api_key is None or not hmac.compare_digest(api_key, settings.hevy_webhook_secret):
+            if api_key is None or not hmac.compare_digest(api_key, settings.rest_api_key):
                 return JSONResponse(
                     status_code=400,
                     content={"detail": "Invalid API key"},

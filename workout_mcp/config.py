@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Hevy API configuration
     hevy_api_key: str | None = None
     hevy_base_url: str = "https://api.hevyapp.com"
-    hevy_webhook_secret: str | None = None
+    rest_api_key: str | None = None
     hevy_sync_interval_minutes: int = 360
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

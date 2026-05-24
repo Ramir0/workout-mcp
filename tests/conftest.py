@@ -14,8 +14,8 @@ from workout_mcp.models import Base
 
 @pytest.fixture(autouse=True)
 def _reset_webhook_secret() -> Generator[None]:
-    """Ensure HEVY_WEBHOOK_SECRET is unset during tests so the API key middleware is bypassed."""
-    with patch.object(settings, "hevy_webhook_secret", None):
+    """Ensure REST_API_KEY is unset during tests so the API key middleware is bypassed."""
+    with patch.object(settings, "rest_api_key", None):
         yield
 
 
