@@ -34,7 +34,7 @@ def test_webhook_with_valid_api_key_returns_200(client: TestClient) -> None:
         response = client.post(
             "/webhooks/hevy",
             json={"workoutId": "test-id-123"},
-            headers={"X-API-Key": "test-secret"},
+            headers={"Authorization": "ApiKey test-secret"},
         )
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
@@ -46,7 +46,7 @@ def test_webhook_invalid_api_key_returns_400(client: TestClient) -> None:
         response = client.post(
             "/webhooks/hevy",
             json={"workoutId": "test-id-123"},
-            headers={"X-API-Key": "invalid"},
+            headers={"Authorization": "ApiKey invalid"},
         )
     assert response.status_code == 400
     assert "Invalid API key" in response.json()["detail"]

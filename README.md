@@ -186,7 +186,7 @@ python mcp_server_main.py
 
 ### API Authentication (API Key)
 
-When `REST_API_KEY` is configured, **all REST API endpoints require an API key**. Every request must include the `X-API-Key` header with the exact value of `REST_API_KEY`.
+When `REST_API_KEY` is configured, **all REST API endpoints require an API key**. Every request must include the `Authorization` header with the `ApiKey` scheme and the exact value of `REST_API_KEY`.
 
 If the header is missing or the key is invalid, the server responds with `400 Bad Request`.
 
@@ -197,7 +197,7 @@ If the header is missing or the key is invalid, the server responds with `400 Ba
 ```bash
 curl -X POST http://localhost:9090/webhooks/hevy \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-rest-api-key" \
+  -H "Authorization: ApiKey your-rest-api-key" \
   -d '{"workoutId":"abc123"}'
 ```
 
@@ -205,7 +205,7 @@ curl -X POST http://localhost:9090/webhooks/hevy \
 
 ```bash
 curl -X POST http://localhost:9090/import/csv \
-  -H "X-API-Key: your-rest-api-key" \
+  -H "Authorization: ApiKey your-rest-api-key" \
   -F "file=@hevy_export.csv"
 ```
 
@@ -221,7 +221,7 @@ curl -X POST http://localhost:9090/import/csv \
   -F "file=@hevy_export.csv"
 ```
 
-When `REST_API_KEY` is configured, include the `X-API-Key` header as described in [API Authentication](#api-authentication-api-key).
+When `REST_API_KEY` is configured, include the `Authorization: ApiKey <key>` header as described in [API Authentication](#api-authentication-api-key).
 
 ---
 
@@ -239,7 +239,7 @@ REST_API_KEY=your-rest-api-key
 ```
 
 - `HEVY_API_KEY`: Your personal Hevy API key (available in Hevy app settings). Required for the server to fetch workout details when a webhook is received.
-- `REST_API_KEY`: A static API key for REST API authentication. **Keep this secret secure** — anyone with this key can make API requests. When set, all REST API endpoints require the `X-API-Key` header with this exact value.
+- `REST_API_KEY`: A static API key for REST API authentication. **Keep this secret secure** — anyone with this key can make API requests. When set, all REST API endpoints require the `Authorization: ApiKey <key>` header with this exact value.
 
 #### 2. Configure the Webhook URL in Hevy
 
@@ -260,7 +260,7 @@ When a workout is created or updated, Hevy sends a `POST` request to `/webhooks/
 | Header | Value | Description |
 |--------|-------|-------------|
 | `Content-Type` | `application/json` | JSON payload |
-| `X-API-Key` | `<string>` | Static API key matching the `REST_API_KEY` value. **Required when `REST_API_KEY` is configured.** |
+| `Authorization` | `ApiKey <string>` | Static API key matching the `REST_API_KEY` value. **Required when `REST_API_KEY` is configured.** |
 
 **Body:**
 
