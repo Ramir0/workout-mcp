@@ -95,12 +95,24 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 class ApiKeyMiddleware(BaseHTTPMiddleware):
-    """Verify X-API-Key header on all requests when REST_API_KEY is configured."""
+    """Verify Authorization: ApiKey <key> header on all requests when REST_API_KEY is configured."""
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if settings.rest_api_key:
-            api_key = request.headers.get("X-API-Key")
-            if api_key is None or not hmac.compare_digest(api_key, settings.rest_api_key):
+            auth_header = request.headers.get("Authorization")
+            if auth_header is None:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Invalid API key"},
+                )
+            parts = auth_header.split(None, 1)
+            if len(parts) != 2 or parts[0] != "ApiKey":
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Invalid API key"},
+                )
+            api_key = parts[1]
+            if not hmac.compare_digest(api_key, settings.rest_api_key):
                 return JSONResponse(
                     status_code=400,
                     content={"detail": "Invalid API key"},
