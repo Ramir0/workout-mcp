@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import hmac
 import io
 import time
@@ -95,24 +94,21 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-class SignatureVerificationMiddleware(BaseHTTPMiddleware):
-    """Verify X-Hevy-Signature on all requests when HEVY_WEBHOOK_SECRET is configured."""
+class ApiKeyMiddleware(BaseHTTPMiddleware):
+    """Verify X-API-Key header on all requests when REST_API_KEY is configured."""
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        if settings.hevy_webhook_secret:
-            body = await request.body()
-            signature = request.headers.get("X-Hevy-Signature")
-            if not _verify_webhook_signature(body, signature, settings.hevy_webhook_secret):
+        if settings.rest_api_key:
+            api_key = request.headers.get("X-API-Key")
+            if api_key is None or not hmac.compare_digest(api_key, settings.rest_api_key):
                 return JSONResponse(
                     status_code=400,
-                    content={"detail": "Invalid signature"},
+                    content={"detail": "Invalid API key"},
                 )
-            # Cache body so downstream consumers (e.g., request.json(), UploadFile) can re-read it
-            request._body = body
         return await call_next(request)
 
 
-app.add_middleware(SignatureVerificationMiddleware)
+app.add_middleware(ApiKeyMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 
@@ -254,13 +250,6 @@ async def import_csv(
             "sets": sets_discarded,
         },
     }
-
-
-def _verify_webhook_signature(body: bytes, signature: str | None, secret: str) -> bool:
-    if signature is None:
-        return False
-    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
 
 
 async def _process_webhook_workout(workout_id: str) -> None:
