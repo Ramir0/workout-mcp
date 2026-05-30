@@ -1,7 +1,6 @@
 """Pytest fixtures and configuration."""
 
 from collections.abc import Generator
-from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,13 +9,6 @@ from sqlalchemy.orm import Session, SessionTransaction, sessionmaker
 
 from workout_mcp.config import settings
 from workout_mcp.models import Base
-
-
-@pytest.fixture(autouse=True)
-def _reset_api_key() -> Generator[None]:
-    """Ensure REST_API_KEY is unset during tests so the API key middleware is bypassed."""
-    with patch.object(settings, "rest_api_key", None):
-        yield
 
 
 @pytest.fixture(scope="session")
