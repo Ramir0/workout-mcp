@@ -247,7 +247,16 @@ async def _process_webhook_workout(workout_id: str) -> None:
         async with HevyClient() as client:
             workout_data = await client.get_workout(workout_id)
     except HevyAPIError as exc:
-        logger.error("webhook_fetch_failed", workout_id=workout_id, error=str(exc))
+        logger.error(
+            "webhook_fetch_failed",
+            workout_id=workout_id,
+            error=str(exc),
+            url=exc.url,
+            method=exc.method,
+            params=exc.params,
+            status_code=exc.status_code,
+            response_text=exc.response_text,
+        )
         return
 
     from workout_mcp.database import SessionLocal

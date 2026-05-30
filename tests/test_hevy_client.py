@@ -35,9 +35,13 @@ async def test_get_workout_not_found(client: HevyClient) -> None:
     mock_response = httpx.Response(404, json={"error": "not found"})
     with (
         patch.object(client._client, "request", new_callable=AsyncMock, return_value=mock_response),
-        pytest.raises(HevyAPIError, match="404"),
+        pytest.raises(HevyAPIError, match="404") as exc_info,
     ):
         await client.get_workout("w1")
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.url is not None
+    assert exc_info.value.method == "GET"
+    assert exc_info.value.response_text is not None
 
 
 @pytest.mark.anyio
@@ -45,9 +49,11 @@ async def test_get_workout_rate_limit(client: HevyClient) -> None:
     mock_response = httpx.Response(429)
     with (
         patch.object(client._client, "request", new_callable=AsyncMock, return_value=mock_response),
-        pytest.raises(HevyRateLimitError),
+        pytest.raises(HevyRateLimitError) as exc_info,
     ):
         await client.get_workout("w1")
+    assert exc_info.value.status_code == 429
+    assert exc_info.value.url is not None
 
 
 @pytest.mark.anyio
@@ -55,9 +61,11 @@ async def test_get_workout_auth_error(client: HevyClient) -> None:
     mock_response = httpx.Response(401)
     with (
         patch.object(client._client, "request", new_callable=AsyncMock, return_value=mock_response),
-        pytest.raises(HevyAuthError),
+        pytest.raises(HevyAuthError) as exc_info,
     ):
         await client.get_workout("w1")
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.url is not None
 
 
 @pytest.mark.anyio
