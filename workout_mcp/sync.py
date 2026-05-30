@@ -39,7 +39,14 @@ async def sync_hevy_workouts(db: Session) -> None:
         async with HevyClient() as client:
             page = 1
             while True:
-                response = await client.get_workout_events(since=since, page=page)
+                try:
+                    response = await client.get_workout_events(since=since, page=page)
+                except HevyAPIError as exc:
+                    if exc.status_code == 404:
+                        # Hevy returns 404 for pages beyond the last page.
+                        break
+                    raise
+
                 events = response.get("events", [])
 
                 if not events:

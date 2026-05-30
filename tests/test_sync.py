@@ -88,6 +88,52 @@ async def test_sync_skips_deleted_event(db_session: Session) -> None:
 
 
 @pytest.mark.anyio
+async def test_sync_404_on_pagination_breaks_loop_and_advances_watermark(
+    db_session: Session,
+) -> None:
+    mock_events = {
+        "events": [
+            {
+                "type": "updated",
+                "workout": {
+                    "id": "w1",
+                    "title": "Push Day",
+                    "description": None,
+                    "start_time": "2024-01-01T10:00:00+00:00",
+                    "end_time": "2024-01-01T11:00:00+00:00",
+                    "updated_at": "2024-01-01T12:00:00+00:00",
+                    "routine_name": "Push",
+                    "exercises": [],
+                },
+            }
+        ]
+    }
+
+    with (
+        patch("workout_mcp.sync.HevyClient") as mock_client_cls,
+        patch("workout_mcp.sync.settings.hevy_api_key", "test-api-key"),
+    ):
+        client = AsyncMock()
+        client.get_workout_events = AsyncMock(
+            side_effect=[
+                mock_events,
+                HevyAPIError("not found", status_code=404),
+            ]
+        )
+        client.get_workout = AsyncMock(return_value=mock_events["events"][0]["workout"])
+        client.close = AsyncMock()
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+
+        await sync_hevy_workouts(db_session)
+
+    assert db_session.query(Workout).count() == 1
+    sync_state = db_session.query(SyncState).first()
+    assert sync_state is not None
+    assert sync_state.last_sync_at is not None
+
+
+@pytest.mark.anyio
 async def test_sync_api_error_aborts(db_session: Session) -> None:
     with (
         patch("workout_mcp.sync.HevyClient") as mock_client_cls,
