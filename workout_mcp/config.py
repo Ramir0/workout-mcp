@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "console"  # "console" or "json"
 
+    # CORS configuration
+    cors_origins: str = ""
+
     # Hevy API configuration
     hevy_api_key: str | None = None
     hevy_base_url: str = "https://api.hevyapp.com"
