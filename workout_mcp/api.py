@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hmac
 import io
 import time
 import uuid
@@ -14,6 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
@@ -94,34 +94,17 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-class ApiKeyMiddleware(BaseHTTPMiddleware):
-    """Verify Authorization: ApiKey <key> header on all requests when REST_API_KEY is configured."""
-
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        if settings.rest_api_key:
-            auth_header = request.headers.get("Authorization")
-            if auth_header is None:
-                return JSONResponse(
-                    status_code=400,
-                    content={"detail": "Invalid API key"},
-                )
-            parts = auth_header.split(None, 1)
-            if len(parts) != 2 or parts[0] != "ApiKey":
-                return JSONResponse(
-                    status_code=400,
-                    content={"detail": "Invalid API key"},
-                )
-            api_key = parts[1]
-            if not hmac.compare_digest(api_key, settings.rest_api_key):
-                return JSONResponse(
-                    status_code=400,
-                    content={"detail": "Invalid API key"},
-                )
-        return await call_next(request)
-
-
-app.add_middleware(ApiKeyMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+
+if settings.cors_origins:
+    origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 def get_db() -> Generator[Session]:
@@ -275,7 +258,16 @@ async def _process_webhook_workout(workout_id: str) -> None:
         async with HevyClient() as client:
             workout_data = await client.get_workout(workout_id)
     except HevyAPIError as exc:
-        logger.error("webhook_fetch_failed", workout_id=workout_id, error=str(exc))
+        logger.error(
+            "webhook_fetch_failed",
+            workout_id=workout_id,
+            error=str(exc),
+            url=exc.url,
+            method=exc.method,
+            params=exc.params,
+            status_code=exc.status_code,
+            response_text=exc.response_text,
+        )
         return
 
     from workout_mcp.database import SessionLocal

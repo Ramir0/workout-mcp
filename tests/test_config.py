@@ -72,12 +72,10 @@ def test_hevy_config_fields() -> None:
         {
             "HEVY_API_KEY": "test-api-key-123",
             "HEVY_BASE_URL": "https://api.hevyapp.com",
-            "REST_API_KEY": "super-secret",
             "HEVY_SYNC_INTERVAL_MINUTES": "60",
         },
     ):
         settings = Settings()
         assert settings.hevy_api_key == "test-api-key-123"
         assert settings.hevy_base_url == "https://api.hevyapp.com"
-        assert settings.rest_api_key == "super-secret"
         assert settings.hevy_sync_interval_minutes == 60

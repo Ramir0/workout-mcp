@@ -39,7 +39,14 @@ async def sync_hevy_workouts(db: Session) -> None:
         async with HevyClient() as client:
             page = 1
             while True:
-                response = await client.get_workout_events(since=since, page=page)
+                try:
+                    response = await client.get_workout_events(since=since, page=page)
+                except HevyAPIError as exc:
+                    if exc.status_code == 404:
+                        # Hevy returns 404 for pages beyond the last page.
+                        break
+                    raise
+
                 events = response.get("events", [])
 
                 if not events:
@@ -56,7 +63,17 @@ async def sync_hevy_workouts(db: Session) -> None:
                 page += 1
 
     except HevyAPIError as exc:
-        logger.error("sync_api_error", error=str(exc))
+        logger.error(
+            "sync_api_error",
+            error=str(exc),
+            page=page,
+            since=since.isoformat(),
+            url=exc.url,
+            method=exc.method,
+            params=exc.params,
+            status_code=exc.status_code,
+            response_text=exc.response_text,
+        )
         return
 
     if latest_event_time:
@@ -93,7 +110,16 @@ async def _process_event(db: Session, client: HevyClient, event: dict[str, Any])
                 try:
                     workout_data = await client.get_workout(workout_id)
                 except HevyAPIError as exc:
-                    logger.error("sync_fetch_failed", workout_id=workout_id, error=str(exc))
+                    logger.error(
+                        "sync_fetch_failed",
+                        workout_id=workout_id,
+                        error=str(exc),
+                        url=exc.url,
+                        method=exc.method,
+                        params=exc.params,
+                        status_code=exc.status_code,
+                        response_text=exc.response_text,
+                    )
                     return
             else:
                 logger.warning("sync_event_missing_workout_data")

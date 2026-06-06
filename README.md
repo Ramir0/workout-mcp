@@ -184,44 +184,14 @@ python main.py
 python mcp_server_main.py
 ```
 
-### API Authentication (API Key)
-
-When `REST_API_KEY` is configured, **all REST API endpoints require an API key**. Every request must include the `Authorization` header with the `ApiKey` scheme and the exact value of `REST_API_KEY`.
-
-If the header is missing or the key is invalid, the server responds with `400 Bad Request`.
-
-**To disable API key verification**, leave `REST_API_KEY` unset (default).
-
-#### Example with cURL (JSON endpoint)
-
-```bash
-curl -X POST http://localhost:9090/webhooks/hevy \
-  -H "Content-Type: application/json" \
-  -H "Authorization: ApiKey your-rest-api-key" \
-  -d '{"workoutId":"abc123"}'
-```
-
-#### Example with cURL (multipart file upload)
-
-```bash
-curl -X POST http://localhost:9090/import/csv \
-  -H "Authorization: ApiKey your-rest-api-key" \
-  -F "file=@hevy_export.csv"
-```
-
----
-
 ### Importing Hevy CSV Data
 
 Export your workout data from the Hevy app and use the REST API endpoint to import:
 
 ```bash
-# Without API key authentication (REST_API_KEY not set)
 curl -X POST http://localhost:9090/import/csv \
   -F "file=@hevy_export.csv"
 ```
-
-When `REST_API_KEY` is configured, include the `Authorization: ApiKey <key>` header as described in [API Authentication](#api-authentication-api-key).
 
 ---
 
@@ -235,11 +205,9 @@ Add the following to your `.env` file:
 
 ```bash
 HEVY_API_KEY=your-hevy-api-key
-REST_API_KEY=your-rest-api-key
 ```
 
 - `HEVY_API_KEY`: Your personal Hevy API key (available in Hevy app settings). Required for the server to fetch workout details when a webhook is received.
-- `REST_API_KEY`: A static API key for REST API authentication. **Keep this secret secure** — anyone with this key can make API requests. When set, all REST API endpoints require the `Authorization: ApiKey <key>` header with this exact value.
 
 #### 2. Configure the Webhook URL in Hevy
 
@@ -260,7 +228,6 @@ When a workout is created or updated, Hevy sends a `POST` request to `/webhooks/
 | Header | Value | Description |
 |--------|-------|-------------|
 | `Content-Type` | `application/json` | JSON payload |
-| `Authorization` | `ApiKey <string>` | Static API key matching the `REST_API_KEY` value. **Required when `REST_API_KEY` is configured.** |
 
 **Body:**
 
@@ -275,14 +242,12 @@ When a workout is created or updated, Hevy sends a `POST` request to `/webhooks/
 ```mermaid
 flowchart LR
     H[Hevy App] -->|POST /webhooks/hevy| W[Workout MCP Server]
-    W -->|Verify API Key| V{Valid?}
-    V -->|No| R1[400 Bad Request]
-    V -->|Yes| P[Queue Background Task]
+    W --> P[Queue Background Task]
     P --> F[Fetch Workout from Hevy API]
     F --> U[Upsert into Database]
 ```
 
-- The endpoint responds immediately with `{"status": "ok"}` (HTTP 200) after API key verification.
+- The endpoint responds immediately with `{"status": "ok"}` (HTTP 200).
 - The actual workout fetch and database upsert happen asynchronously in a background task.
 - If `HEVY_API_KEY` is not configured, the endpoint returns `503 Service Unavailable`.
 
@@ -362,7 +327,6 @@ All settings are managed via `pydantic-settings` with `.env` file auto-loading.
 | `APP_PORT` | `9090` | Port for the REST API server |
 | `MCP_PORT` | `9091` | Port for the MCP server |
 | `HEVY_API_KEY` | `None` | Hevy API key (required for webhook sync and automatic fetching) |
-| `REST_API_KEY` | `None` | Static API key for REST API authentication |
 | `HEVY_BASE_URL` | `https://api.hevyapp.com` | Hevy API base URL |
 | `LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 | `LOG_FORMAT` | `console` | Log output format (`console` for dev, `json` for production) |
