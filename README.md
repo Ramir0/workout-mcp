@@ -196,7 +196,8 @@ Export your workout data from the Hevy app and use the REST API endpoint to impo
 
 ```bash
 curl -X POST http://localhost:9090/import/csv \
-  -F "file=@hevy_export.csv"
+  -H "Content-Type: text/csv" \
+  --data-binary @hevy_export.csv
 ```
 
 ---
@@ -440,7 +441,7 @@ docker compose -f docker-compose.prod.yml logs -f
 docker compose -f docker-compose.prod.yml down
 ```
 
-6. Verify REST API: `curl -X POST http://localhost:9090/import/csv -F "file=@hevy_export.csv"`
+6. Verify REST API: `curl -X POST http://localhost:9090/import/csv -H "Content-Type: text/csv" --data-binary @hevy_export.csv`
 7. Verify MCP Server: `curl http://localhost:9091`
 
 The host's HTTP server should reverse proxy to `localhost:8000`.
