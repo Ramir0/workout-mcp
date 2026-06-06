@@ -19,3 +19,6 @@ data/
 # Test artifacts
 .coverage
 htmlcov/
+
+# Superpowers
+docs/superpowers/
