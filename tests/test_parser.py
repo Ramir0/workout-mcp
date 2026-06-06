@@ -266,7 +266,7 @@ def test_parse_duplicate_exercise_in_routine() -> None:
         ("Bench Press", 3),
     }
 
-    # Warm-up Bench Press gets exactly one set, working-set Bench Press gets two
+    # Warm-up Bench Press gets one set, each of the two working-set entries gets one set
     warmup_bench = next(e for e in exercises if e.name == "Bench Press" and e.exercise_index == 0)
     assert len(warmup_bench.sets) == 1
     assert warmup_bench.sets[0].weight == 60.0
