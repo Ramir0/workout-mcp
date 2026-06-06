@@ -141,7 +141,6 @@ async def import_csv(
     workouts_created = 0
     exercises_created = 0
     workout_exercises_created = 0
-    workout_exercises_updated = 0  # noqa: F841 — kept for response-dict backward compat
     sets_created = 0
     sets_discarded = 0
 
