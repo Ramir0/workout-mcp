@@ -230,6 +230,63 @@ def test_import_csv_replaces_workout_exercises_on_reimport(
     assert new_rows[1].exercise_index == 1
 
 
+def test_import_csv_replaces_workout_exercises_growth_case(
+    client: TestClient, db_session: Session
+) -> None:
+    """Re-importing a routine with MORE exercises still replaces the full set, never appends.
+
+    Regression-locker for a future "partial-merge optimization" that only deletes
+    WorkoutExercise rows absent from the new layout. That optimization would
+    silently double-add exercises on growth (1 + 3 = 4 rows instead of 3).
+    """
+    from workout_mcp.models import WorkoutExercise
+
+    initial = (
+        '"title","start_time","end_time","description","exercise_title","superset_id",'
+        '"exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n'
+        '"Growth Test","Mar 1, 2024, 10:00 AM","Mar 1, 2024, 11:00 AM","","Bench Press","","",'
+        '0,"normal",100,5,,0,8\n'
+    )
+    response = client.post(
+        "/import/csv",
+        content=initial.encode("utf-8"),
+        headers={"Content-Type": "text/csv"},
+    )
+    assert response.status_code == 200
+    assert response.json()["created"]["workout_exercises"] == 1
+
+    grown = (
+        '"title","start_time","end_time","description","exercise_title","superset_id",'
+        '"exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n'
+        '"Growth Test","Mar 1, 2024, 10:00 AM","Mar 1, 2024, 11:00 AM","","Bench Press","","",'
+        '0,"normal",100,5,,0,8\n'
+        '"Growth Test","Mar 1, 2024, 10:00 AM","Mar 1, 2024, 11:00 AM","","Squat","","",'
+        '0,"normal",140,5,,0,9\n'
+        '"Growth Test","Mar 1, 2024, 10:00 AM","Mar 1, 2024, 11:00 AM","","Leg Press","","",'
+        '0,"normal",200,5,,0,8\n'
+    )
+    response = client.post(
+        "/import/csv",
+        content=grown.encode("utf-8"),
+        headers={"Content-Type": "text/csv"},
+    )
+    assert response.status_code == 200
+    assert response.json()["created"]["workout_exercises"] == 3
+
+    workout = db_session.query(Workout).join(Routine).filter(Routine.name == "Growth Test").first()
+    assert workout is not None
+    rows = (
+        db_session.query(WorkoutExercise)
+        .filter_by(workout_id=workout.id)
+        .order_by(WorkoutExercise.exercise_index)
+        .all()
+    )
+    assert len(rows) == 3
+    names = [r.exercise.name for r in rows]
+    assert names == ["Bench Press", "Squat", "Leg Press"]
+    assert len(set(names)) == 3
+
+
 def test_import_missing_body(client: TestClient) -> None:
     """Missing body or wrong Content-Type returns 400."""
     response = client.post("/import/csv")
