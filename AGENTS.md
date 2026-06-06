@@ -25,6 +25,7 @@ Compact reference for AI agents working in this repo.
 | Run all hooks | `uv run pre-commit run --all-files` |
 | Run REST API | `python main.py` |
 | Run MCP Server | `python mcp_server_main.py` |
+| Import CSV | `curl -X POST http://localhost:9090/import/csv -H "Content-Type: text/csv" --data-binary @file.csv` |
 
 ## State of the Codebase
 
