@@ -223,3 +223,21 @@ def test_negative_duration() -> None:
     )
     with pytest.raises(InvalidValueError, match="duration_seconds must be non-negative"):
         parse_hevy_csv(io.StringIO(csv_text))
+
+
+def test_parse_csv_with_bom() -> None:
+    """CSV with UTF-8 BOM prefix should parse successfully."""
+    csv_text = (
+        '\ufeff"title","start_time","end_time","description","exercise_title",'
+        '"superset_id","exercise_notes","set_index","set_type","weight_kg",'
+        '"reps","distance_km","duration_seconds","rpe"\n'
+        '"Legs","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Squat",'
+        '"","",0,"normal",100,5,,0,\n'
+    )
+    routines = parse_hevy_csv(io.StringIO(csv_text))
+    assert len(routines) == 1
+    workout = routines[0].workouts[0]
+    assert workout.start == datetime(2024, 1, 1, 10, 0)
+    assert workout.end == datetime(2024, 1, 1, 11, 0)
+    assert workout.exercises[0].name == "Squat"
+    assert workout.exercises[0].sets[0].weight == 100.0

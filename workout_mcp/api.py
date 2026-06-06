@@ -135,6 +135,7 @@ async def import_csv(
     try:
         routines = parse_hevy_csv(io.StringIO(content))
     except ParseError as exc:
+        logger.warning("parse_error", error=str(exc))
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     routines_created = 0

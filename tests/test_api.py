@@ -235,3 +235,23 @@ def test_generic_exception_handler_returns_500() -> None:
         )
         assert response.status_code == 500
         assert "Internal server error" in response.json()["detail"]
+
+
+def test_import_csv_with_bom(client: TestClient, db_session: Session) -> None:
+    """CSV with UTF-8 BOM prefix should import successfully."""
+    csv_bytes = (
+        '\ufeff"title","start_time","end_time","description","exercise_title",'
+        '"superset_id","exercise_notes","set_index","set_type","weight_kg",'
+        '"reps","distance_km","duration_seconds","rpe"\n'
+        '"Legs","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Squat",'
+        '"","",0,"normal",100,5,,0,\n'
+    ).encode()
+    response = client.post(
+        "/import/csv",
+        content=csv_bytes,
+        headers={"Content-Type": "text/csv"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created"]["routines"] == 1
+    assert data["created"]["sets"] == 1
