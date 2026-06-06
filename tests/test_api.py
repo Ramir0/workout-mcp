@@ -50,7 +50,7 @@ def test_import_csv_success(client: TestClient, db_session: Session) -> None:
 
 
 def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
-    """Importing the same CSV twice must be fully idempotent - no duplicates."""
+    """Importing the same CSV twice must leave the final database state unchanged."""
     payload = _csv_payload(FIXTURES_DIR / "sample_hevy.csv")
     client.post("/import/csv", content=payload, headers={"Content-Type": "text/csv"})
 
@@ -61,8 +61,11 @@ def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
     assert data["created"]["routines"] == 0
     assert data["created"]["workouts"] == 0
     assert data["created"]["exercises"] == 0
-    assert data["created"]["workout_exercises"] == 0
-    assert data["created"]["sets"] == 0
+    # Re-imports wipe and recreate WorkoutExercise/Set rows for the matched
+    # workout, so deltas reflect the replace-not-merge semantics.
+    assert data["created"]["workout_exercises"] == 4
+    assert data["created"]["sets"] == 4
+    assert data["discarded"]["sets"] == 0
 
     assert db_session.query(Routine).count() == 2
     assert db_session.query(Workout).count() == 2
@@ -102,8 +105,8 @@ def test_import_csv_hybrid_workout(client: TestClient, db_session: Session) -> N
     assert we_by_index[1].sets[0].duration_seconds == 600
 
 
-def test_import_csv_discards_existing_set(client: TestClient, db_session: Session) -> None:
-    """When a workout_exercise already has a set with the same set_index, it is discarded."""
+def test_import_csv_replaces_existing_set(client: TestClient, db_session: Session) -> None:
+    """Re-importing wipes stale WorkoutExercise rows and recreates them with the new set data."""
     payload = _csv_payload(FIXTURES_DIR / "sample_hevy.csv")
     client.post("/import/csv", content=payload, headers={"Content-Type": "text/csv"})
 
@@ -120,12 +123,13 @@ def test_import_csv_discards_existing_set(client: TestClient, db_session: Sessio
 
     assert response.status_code == 200
     data = response.json()
-    assert data["created"]["sets"] == 0
-    assert data["discarded"]["sets"] == 1
+    assert data["created"]["workout_exercises"] == 1
+    assert data["created"]["sets"] == 1
+    assert data["discarded"]["sets"] == 0
 
     bench = db_session.query(Exercise).filter_by(name="Bench Press").first()
     assert bench is not None
-    assert bench.workout_exercises[0].sets[0].weight == 100.0
+    assert bench.workout_exercises[0].sets[0].weight == 999.0
 
 
 def test_import_csv_empty_file(client: TestClient) -> None:
@@ -172,27 +176,28 @@ def test_import_non_utf8_file(client: TestClient) -> None:
     assert "UTF-8" in response.json()["detail"]
 
 
-def test_import_csv_updates_exercise_index(client: TestClient, db_session: Session) -> None:
-    """Re-importing with reordered exercises updates exercise_index on existing workout_exercises."""
+def test_import_csv_replaces_workout_exercises_on_reimport(
+    client: TestClient, db_session: Session
+) -> None:
+    """Re-importing a routine replaces its WorkoutExercise set, not merges with the old one."""
     from workout_mcp.models import WorkoutExercise
 
     payload = _csv_payload(FIXTURES_DIR / "sample_hevy.csv")
     client.post("/import/csv", content=payload, headers={"Content-Type": "text/csv"})
 
-    bench = db_session.query(Exercise).filter_by(name="Bench Press").first()
-    assert bench is not None
-    bench_we = db_session.query(WorkoutExercise).filter_by(exercise_id=bench.id).first()
-    assert bench_we is not None
-    original_index = bench_we.exercise_index
+    push_workout = (
+        db_session.query(Workout).join(Routine).filter(Routine.name == "Push Day").first()
+    )
+    assert push_workout is not None
+    original_count = db_session.query(WorkoutExercise).filter_by(workout_id=push_workout.id).count()
+    assert original_count == 3  # Bench@0, Bench@1, Squat
 
-    # Reorder: Squat rows first, then Bench Press rows for Push Day
+    # Reorder: Squat first, then one Bench Press for Push Day
     reordered = (
         '"title","start_time","end_time","description","exercise_title","superset_id",'
         '"exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n'
         '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Squat","","",0,"normal",140,5,,0,9\n'
         '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Bench Press","","",0,"normal",100,5,,0,8\n'
-        '"Push Day","Jan 1, 2024, 10:00 AM","Jan 1, 2024, 11:00 AM","","Bench Press","","",1,"normal",100,5,,0,8.5\n'
-        '"Pull Day","Jan 2, 2024, 10:00 AM","Jan 2, 2024, 11:00 AM","","Deadlift","","",0,"normal",180,5,,0,9\n'
     )
 
     response = client.post(
@@ -203,13 +208,26 @@ def test_import_csv_updates_exercise_index(client: TestClient, db_session: Sessi
 
     assert response.status_code == 200
     data = response.json()
-    assert data["created"]["workout_exercises"] == 0
-    assert data["created"]["sets"] == 0
-    assert data["discarded"]["sets"] == 4
+    assert data["created"]["workouts"] == 0
+    assert data["created"]["exercises"] == 0
+    assert data["created"]["workout_exercises"] == 2  # only the two new rows
 
-    # Exercise index should have changed
-    db_session.refresh(bench_we)
-    assert bench_we.exercise_index != original_index
+    # The total WorkoutExercise count for the Push Day workout must still be 2,
+    # because the old rows were replaced.
+    final_count = db_session.query(WorkoutExercise).filter_by(workout_id=push_workout.id).count()
+    assert final_count == 2
+
+    # The Squat row is now at index 0, Bench Press at index 1.
+    new_rows = (
+        db_session.query(WorkoutExercise)
+        .filter_by(workout_id=push_workout.id)
+        .order_by(WorkoutExercise.exercise_index)
+        .all()
+    )
+    assert new_rows[0].exercise.name == "Squat"
+    assert new_rows[0].exercise_index == 0
+    assert new_rows[1].exercise.name == "Bench Press"
+    assert new_rows[1].exercise_index == 1
 
 
 def test_import_missing_body(client: TestClient) -> None:

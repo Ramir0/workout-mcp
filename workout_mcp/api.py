@@ -173,6 +173,18 @@ async def import_csv(
                     db.add(workout)
                     db.flush()
                     workouts_created += 1
+                else:
+                    # Re-import path: clear stale WorkoutExercise rows (and
+                    # their Set children, via ORM cascade) so the upsert below
+                    # produces exactly the new layout. Use ORM-level delete so
+                    # the cascade fires; a bulk query.delete() would bypass it
+                    # and trip the FK from set.workout_exercise_id.
+                    stale_workout_exercises = (
+                        db.query(WorkoutExercise).filter_by(workout_id=workout.id).all()
+                    )
+                    for stale_we in stale_workout_exercises:
+                        db.delete(stale_we)
+                    db.flush()
 
                 for parsed_exercise in parsed_workout.exercises:
                     exercise = db.query(Exercise).filter_by(name=parsed_exercise.name).first()
