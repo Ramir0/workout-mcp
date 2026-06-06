@@ -29,7 +29,7 @@ def test_import_csv_success(client: TestClient, db_session: Session) -> None:
     assert data["created"]["routines"] == 2
     assert data["created"]["workouts"] == 2
     assert data["created"]["exercises"] == 3
-    assert data["created"]["workout_exercises"] == 3
+    assert data["created"]["workout_exercises"] == 4
     assert data["created"]["sets"] == 4
     assert data["discarded"]["sets"] == 0
 
@@ -41,8 +41,12 @@ def test_import_csv_success(client: TestClient, db_session: Session) -> None:
 
     bench = db_session.query(Exercise).filter_by(name="Bench Press").first()
     assert bench is not None
-    assert len(bench.workout_exercises) == 1
-    assert len(bench.workout_exercises[0].sets) == 2
+    # sample_hevy.csv has two consecutive Bench Press rows (set_index 0 and 1),
+    # so each becomes its own WorkoutExercise with a single set under the new
+    # occurrence-preserving parser.
+    assert len(bench.workout_exercises) == 2
+    for we in bench.workout_exercises:
+        assert len(we.sets) == 1
 
 
 def test_import_csv_idempotent(client: TestClient, db_session: Session) -> None:
@@ -83,12 +87,19 @@ def test_import_csv_hybrid_workout(client: TestClient, db_session: Session) -> N
     assert len(routine.workouts) == 1
     exercise = db_session.query(Exercise).filter_by(name="Weighted Run").first()
     assert exercise is not None
-    assert len(exercise.workout_exercises) == 1
-    sets = sorted(exercise.workout_exercises[0].sets, key=lambda s: s.set_index)
-    assert sets[0].weight == 20.0
-    assert sets[0].duration_seconds is None
-    assert sets[1].weight is None
-    assert sets[1].duration_seconds == 600
+    # hybrid.csv has two consecutive Weighted Run rows (strength then cardio).
+    # The new parser emits one ParsedExercise per occurrence, so we get two
+    # WorkoutExercise rows, each holding the set for its exercise_index.
+    assert len(exercise.workout_exercises) == 2
+    we_by_index = sorted(exercise.workout_exercises, key=lambda we: we.exercise_index)
+    assert len(we_by_index[0].sets) == 1
+    assert we_by_index[0].sets[0].set_index == 0
+    assert we_by_index[0].sets[0].weight == 20.0
+    assert we_by_index[0].sets[0].duration_seconds is None
+    assert len(we_by_index[1].sets) == 1
+    assert we_by_index[1].sets[0].set_index == 1
+    assert we_by_index[1].sets[0].weight is None
+    assert we_by_index[1].sets[0].duration_seconds == 600
 
 
 def test_import_csv_discards_existing_set(client: TestClient, db_session: Session) -> None:
