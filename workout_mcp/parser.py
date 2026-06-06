@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import csv
-import io
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TextIO
@@ -115,10 +114,6 @@ def _parse_optional_int(value: str, field: str) -> int | None:
 
 def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
     """Parse a Hevy CSV export into a nested workout structure."""
-    content = source.read()
-    if content.startswith("\ufeff"):
-        content = content.removeprefix("\ufeff")
-    reader = csv.DictReader(io.StringIO(content))
 
     if reader.fieldnames is None:
         raise EmptyCSVError("CSV has no header row")

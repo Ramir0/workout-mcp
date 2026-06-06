@@ -20,5 +20,5 @@ data/
 .coverage
 htmlcov/
 
-# Superpowers
+# Plugins
 docs/superpowers/
