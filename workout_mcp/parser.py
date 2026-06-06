@@ -147,24 +147,32 @@ def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
     # Build nested structure
     routines: dict[str, ParsedRoutine] = {}
     for (routine_name, start, end), workout_rows in workout_groups.items():
-        # Determine exercise order by first appearance
-        seen_exercises: list[str] = []
+        # Track exercise occurrences in first-appearance order.  The same
+        # exercise name may appear at multiple positions in a routine; each
+        # occurrence becomes its own ParsedExercise with a unique
+        # exercise_index.
+        occurrence_keys: list[tuple[str, int]] = []
+        occurrence_index: dict[str, int] = {}
         for row in workout_rows:
             ex_name = row["exercise_title"].strip()
             if not ex_name:
                 raise InvalidValueError("exercise_title cannot be empty")
-            if ex_name not in seen_exercises:
-                seen_exercises.append(ex_name)
+            if ex_name not in occurrence_index:
+                occurrence_index[ex_name] = 0
+                occurrence_keys.append((ex_name, 0))
+            else:
+                occurrence_index[ex_name] += 1
+                occurrence_keys.append((ex_name, occurrence_index[ex_name]))
 
-        # Group rows by exercise
-        exercise_groups: dict[str, list[dict[str, str]]] = {}
-        for row in workout_rows:
-            ex_name = row["exercise_title"].strip()
-            exercise_groups.setdefault(ex_name, []).append(row)
+        # Group rows by (exercise_name, occurrence_index)
+        occurrence_groups: dict[tuple[str, int], list[dict[str, str]]] = {}
+        for row, occ_key in zip(workout_rows, occurrence_keys, strict=True):
+            occurrence_groups.setdefault(occ_key, []).append(row)
 
         parsed_exercises: list[ParsedExercise] = []
-        for exercise_index, ex_name in enumerate(seen_exercises):
-            ex_rows = exercise_groups[ex_name]
+        for exercise_index, occ_key in enumerate(occurrence_keys):
+            ex_name, _occ = occ_key
+            ex_rows = occurrence_groups[occ_key]
             sets: list[ParsedSet] = []
             for row in ex_rows:
                 set_index = _parse_int(row["set_index"], "set_index")

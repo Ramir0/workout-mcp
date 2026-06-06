@@ -31,20 +31,29 @@ def test_parse_valid_csv() -> None:
     workout = push.workouts[0]
     assert workout.start == datetime(2024, 1, 1, 10, 0)
     assert workout.end == datetime(2024, 1, 1, 11, 0)
-    assert len(workout.exercises) == 2
+    assert len(workout.exercises) == 3
 
-    bench = workout.exercises[0]
-    assert bench.name == "Bench Press"
-    assert bench.exercise_index == 0
-    assert len(bench.sets) == 2
-    assert bench.sets[0].set_index == 0
-    assert bench.sets[0].weight == 100.0
-    assert bench.sets[0].reps == 5
-    assert bench.sets[0].rpe == 8.0
+    bench_first = workout.exercises[0]
+    assert bench_first.name == "Bench Press"
+    assert bench_first.exercise_index == 0
+    assert len(bench_first.sets) == 1
+    assert bench_first.sets[0].set_index == 0
+    assert bench_first.sets[0].weight == 100.0
+    assert bench_first.sets[0].reps == 5
+    assert bench_first.sets[0].rpe == 8.0
 
-    squat = workout.exercises[1]
+    bench_second = workout.exercises[1]
+    assert bench_second.name == "Bench Press"
+    assert bench_second.exercise_index == 1
+    assert len(bench_second.sets) == 1
+    assert bench_second.sets[0].set_index == 1
+    assert bench_second.sets[0].weight == 100.0
+    assert bench_second.sets[0].reps == 5
+    assert bench_second.sets[0].rpe == 8.5
+
+    squat = workout.exercises[2]
     assert squat.name == "Squat"
-    assert squat.exercise_index == 1
+    assert squat.exercise_index == 2
     assert len(squat.sets) == 1
     assert squat.sets[0].weight == 140.0
 
@@ -157,29 +166,43 @@ def test_exercise_order_preserved() -> None:
     )
     routines = parse_hevy_csv(io.StringIO(csv_text))
     exercises = routines[0].workouts[0].exercises
+    assert len(exercises) == 3
     assert exercises[0].name == "B"
     assert exercises[0].exercise_index == 0
+    assert len(exercises[0].sets) == 1
     assert exercises[1].name == "C"
     assert exercises[1].exercise_index == 1
-    assert len(exercises[0].sets) == 2
+    assert exercises[2].name == "B"
+    assert exercises[2].exercise_index == 2
+    assert len(exercises[2].sets) == 1
 
 
 def test_hybrid_exercise() -> None:
-    """Same exercise with both strength and cardio sets."""
+    """Same exercise with both strength and cardio sets becomes two separate exercises."""
     with open(FIXTURES_DIR / "hybrid.csv", encoding="utf-8") as f:
         routines = parse_hevy_csv(f)
 
     assert len(routines) == 1
-    sets = routines[0].workouts[0].exercises[0].sets
-    assert len(sets) == 2
-    assert sets[0].weight == 20.0
-    assert sets[0].reps == 5
-    assert sets[0].distance_km is None
-    assert sets[0].duration_seconds is None
-    assert sets[1].weight is None
-    assert sets[1].reps is None
-    assert sets[1].distance_km == 2.0
-    assert sets[1].duration_seconds == 600
+    exercises = routines[0].workouts[0].exercises
+    assert len(exercises) == 2
+
+    strength = exercises[0]
+    assert strength.name == "Weighted Run"
+    assert strength.exercise_index == 0
+    assert len(strength.sets) == 1
+    assert strength.sets[0].weight == 20.0
+    assert strength.sets[0].reps == 5
+    assert strength.sets[0].distance_km is None
+    assert strength.sets[0].duration_seconds is None
+
+    cardio = exercises[1]
+    assert cardio.name == "Weighted Run"
+    assert cardio.exercise_index == 1
+    assert len(cardio.sets) == 1
+    assert cardio.sets[0].weight is None
+    assert cardio.sets[0].reps is None
+    assert cardio.sets[0].distance_km == 2.0
+    assert cardio.sets[0].duration_seconds == 600
 
 
 def test_all_empty_metrics_error() -> None:
@@ -223,3 +246,39 @@ def test_negative_duration() -> None:
     )
     with pytest.raises(InvalidValueError, match="duration_seconds must be non-negative"):
         parse_hevy_csv(io.StringIO(csv_text))
+
+
+def test_parse_duplicate_exercise_in_routine() -> None:
+    """Same exercise appearing twice in a routine produces multiple ParsedExercise entries."""
+    with open(FIXTURES_DIR / "duplicate_exercise.csv", encoding="utf-8") as f:
+        routines = parse_hevy_csv(f)
+
+    assert len(routines) == 1
+    exercises = routines[0].workouts[0].exercises
+    assert len(exercises) == 4
+
+    # Bench Press appears at exercise_index 0 (warm-up), 2, and 3 (working sets)
+    by_name_index = {(e.name, e.exercise_index) for e in exercises}
+    assert by_name_index == {
+        ("Bench Press", 0),
+        ("Squat", 1),
+        ("Bench Press", 2),
+        ("Bench Press", 3),
+    }
+
+    # Warm-up Bench Press gets one set, each of the two working-set entries gets one set
+    warmup_bench = next(e for e in exercises if e.name == "Bench Press" and e.exercise_index == 0)
+    assert len(warmup_bench.sets) == 1
+    assert warmup_bench.sets[0].weight == 60.0
+    assert warmup_bench.sets[0].reps == 10
+
+    working_bench = next(e for e in exercises if e.name == "Bench Press" and e.exercise_index == 2)
+    assert len(working_bench.sets) == 1
+    assert working_bench.sets[0].weight == 100.0
+    assert working_bench.sets[0].rpe == 8.0
+
+    second_working_bench = next(
+        e for e in exercises if e.name == "Bench Press" and e.exercise_index == 3
+    )
+    assert len(second_working_bench.sets) == 1
+    assert second_working_bench.sets[0].rpe == 8.5

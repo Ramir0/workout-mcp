@@ -107,3 +107,15 @@ def test_relationship_backrefs() -> None:
     workout.routine = routine
     assert workout in routine.workouts
     assert workout.routine is routine
+
+
+def test_workout_exercise_unique_constraint_includes_exercise_index() -> None:
+    """The unique constraint must allow the same exercise to appear at multiple indices."""
+    from workout_mcp.models import WorkoutExercise
+
+    constraint = WorkoutExercise.__table_args__[0]
+    column_names = {c.name for c in constraint.columns}
+    assert column_names == {"workout_id", "exercise_id", "exercise_index"}, (
+        f"Expected unique constraint on (workout_id, exercise_id, exercise_index), "
+        f"got columns: {column_names}"
+    )
