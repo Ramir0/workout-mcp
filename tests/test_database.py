@@ -85,3 +85,39 @@ def test_transaction_isolation(db_session: Session) -> None:
 
     count = db_session.query(Routine).filter_by(name="Isolation Test").count()
     assert count == 1
+
+
+def test_same_exercise_can_appear_at_two_indices(db_session: Session) -> None:
+    """The same exercise can appear in one workout at two different exercise_index values."""
+    from datetime import datetime
+
+    routine = Routine(name="Repeat Day")
+    db_session.add(routine)
+    db_session.flush()
+
+    workout = Workout(
+        start=datetime(2024, 1, 1, 10, 0, 0),
+        end=datetime(2024, 1, 1, 11, 0, 0),
+        routine=routine,
+    )
+    db_session.add(workout)
+    db_session.flush()
+
+    bench = Exercise(name="Bench Press")
+    db_session.add(bench)
+    db_session.flush()
+
+    warmup = WorkoutExercise(workout=workout, exercise=bench, exercise_index=0)
+    working_sets = WorkoutExercise(workout=workout, exercise=bench, exercise_index=9)
+    db_session.add_all([warmup, working_sets])
+    db_session.commit()
+
+    rows = (
+        db_session.query(WorkoutExercise)
+        .filter_by(workout_id=workout.id, exercise_id=bench.id)
+        .order_by(WorkoutExercise.exercise_index)
+        .all()
+    )
+    assert len(rows) == 2
+    assert rows[0].exercise_index == 0
+    assert rows[1].exercise_index == 9

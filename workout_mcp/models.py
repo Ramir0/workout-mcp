@@ -72,7 +72,7 @@ class WorkoutExercise(Base):
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercise.id"))
     exercise_index: Mapped[int]
 
-    __table_args__ = (UniqueConstraint("workout_id", "exercise_id"),)
+    __table_args__ = (UniqueConstraint("workout_id", "exercise_id", "exercise_index"),)
 
     workout: Mapped[Workout] = relationship(back_populates="workout_exercises")
     exercise: Mapped[Exercise] = relationship(back_populates="workout_exercises")
