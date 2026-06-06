@@ -114,6 +114,7 @@ def _parse_optional_int(value: str, field: str) -> int | None:
 
 def parse_hevy_csv(source: TextIO) -> list[ParsedRoutine]:
     """Parse a Hevy CSV export into a nested workout structure."""
+reader = csv.DictReader(source)
 
     if reader.fieldnames is None:
         raise EmptyCSVError("CSV has no header row")
