@@ -141,7 +141,7 @@ async def import_csv(
     workouts_created = 0
     exercises_created = 0
     workout_exercises_created = 0
-    workout_exercises_updated = 0
+    workout_exercises_updated = 0  # noqa: F841 — kept for response-dict backward compat
     sets_created = 0
     sets_discarded = 0
 
@@ -187,6 +187,7 @@ async def import_csv(
                         .filter_by(
                             workout_id=workout.id,
                             exercise_id=exercise.id,
+                            exercise_index=parsed_exercise.exercise_index,
                         )
                         .first()
                     )
@@ -199,9 +200,6 @@ async def import_csv(
                         db.add(workout_exercise)
                         db.flush()
                         workout_exercises_created += 1
-                    elif workout_exercise.exercise_index != parsed_exercise.exercise_index:
-                        workout_exercise.exercise_index = parsed_exercise.exercise_index
-                        workout_exercises_updated += 1
 
                     for parsed_set in parsed_exercise.sets:
                         set_ = (

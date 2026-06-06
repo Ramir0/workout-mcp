@@ -235,3 +235,36 @@ def test_generic_exception_handler_returns_500() -> None:
         )
         assert response.status_code == 500
         assert "Internal server error" in response.json()["detail"]
+
+
+def test_import_csv_allows_duplicate_exercise_in_routine(
+    client: TestClient, db_session: Session
+) -> None:
+    """A routine that contains the same exercise twice must import without error."""
+    from workout_mcp.models import WorkoutExercise
+
+    response = client.post(
+        "/import/csv",
+        content=_csv_payload(FIXTURES_DIR / "duplicate_exercise.csv"),
+        headers={"Content-Type": "text/csv"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["created"]["routines"] == 1
+    assert data["created"]["workouts"] == 1
+    assert data["created"]["exercises"] == 2  # Bench Press and Squat
+    assert data["created"]["workout_exercises"] == 4  # warm-up, squat, bench x2
+    assert data["created"]["sets"] == 4  # 1 + 1 + 1 + 1
+
+    bench = db_session.query(Exercise).filter_by(name="Bench Press").first()
+    assert bench is not None
+    bench_rows = (
+        db_session.query(WorkoutExercise)
+        .filter_by(exercise_id=bench.id)
+        .order_by(WorkoutExercise.exercise_index)
+        .all()
+    )
+    assert len(bench_rows) == 3
+    assert [r.exercise_index for r in bench_rows] == [0, 2, 3]
+    assert sum(len(r.sets) for r in bench_rows) == 3
