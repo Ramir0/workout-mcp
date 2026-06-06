@@ -92,7 +92,7 @@ erDiagram
   - `id`: Primary key
   - `workout_id`: Foreign key to WORKOUT
   - `exercise_id`: Foreign key to EXERCISE
-  - `exercise_index`: Order of the exercise within the workout
+  - `exercise_index`: Order of the exercise within the workout. A `(workout_id, exercise_id, exercise_index)` tuple is unique, so the same exercise can legitimately appear at multiple positions in a routine (e.g., a warm-up set and a working set of the same lift).
 
 - **SET**: Individual sets performed within an exercise
   - `id`: Primary key
@@ -154,7 +154,13 @@ uv run pre-commit install
 
 ### Local Development Database
 
-Start PostgreSQL using Docker Compose:
+1. Copy the example environment file and adjust values for your machine:
+
+```bash
+cp .env.example .env
+```
+
+2. Start PostgreSQL using Docker Compose:
 
 ```bash
 docker-compose up -d
@@ -166,7 +172,7 @@ This starts a PostgreSQL 16 container with:
 - Password: `postgres`
 - Port: `5432`
 
-To run migrations:
+3. To run migrations:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head

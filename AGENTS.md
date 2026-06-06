@@ -28,26 +28,32 @@ Compact reference for AI agents working in this repo.
 
 ## State of the Codebase
 
-- **Current state**: ORM models defined (`workout_mcp/models.py`) with unique constraints for upsert support. Database infrastructure implemented: `workout_mcp/config.py` (pydantic-settings), `workout_mcp/database.py`, Alembic migrations (`alembic/`). Hevy CSV parser implemented (`workout_mcp/parser.py`) with test fixtures and unit tests. FastAPI REST API implemented (`workout_mcp/api.py`) with `POST /import/csv` endpoint for CSV ingestion with upsert/deduplication, structured exception handlers (422/409/500), and request logging middleware with X-Request-ID. Structured logging configured (`workout_mcp/logging.py`) with structlog (JSON/console renderers). MCP server shelf implemented (`workout_mcp/mcp_server.py`) with FastMCP instance (stateless HTTP) and DB session helper. MCP server entry point (`mcp_server_main.py`) runs as a standalone uvicorn process on port 9091 with lifespan integration. All 7 MCP tools implemented: `get_workout_by_date_range`, `get_workout_by_routine`, `get_workout_by_exercise`, `get_workout_count`, `get_last_workout`, `get_max_pr_by_exercise`, `get_min_pr_by_exercise` with tests (`tests/test_mcp_tools.py`). Docker support added: `Dockerfile`, `.dockerignore`, `docker-compose.prod.yml`. Test infrastructure in place: `tests/conftest.py` (transaction-isolated fixtures + TestClient), `tests/test_models.py`, `tests/test_database.py` (integration tests), `tests/test_parser.py` (parser tests), `tests/test_api.py` (API integration tests including error paths), `tests/test_config.py` (config tests), `tests/test_logging.py` (logging tests), `tests/test_main.py` (app structure tests), `tests/test_mcp_tools.py` (MCP tool tests including xfail error paths), `tests/fixtures/` (CSV test data). Wave 3 completed. Issue #16 (comprehensive test coverage) completed: 90% coverage threshold enforced in CI, coverage config in pyproject.toml. Issue #17 (error handling, logging, production readiness) completed: structlog, pydantic-settings, exception handlers, request logging middleware, MCP tool error handling.
+- **Current state**: ORM models defined (`workout_mcp/models.py`) with unique constraints for upsert support. `workout_exercise` has `UniqueConstraint("workout_id", "exercise_id", "exercise_index")` so the same exercise can appear at multiple positions in a routine (e.g., a warm-up set and working sets of the same lift). Database infrastructure implemented: `workout_mcp/config.py` (pydantic-settings), `workout_mcp/database.py`, Alembic migrations (`alembic/`). Hevy CSV parser implemented (`workout_mcp/parser.py`) — tracks per-exercise occurrence index in first-appearance order so duplicate exercise names within one workout become distinct `ParsedExercise` entries with unique `exercise_index` values. FastAPI REST API implemented (`workout_mcp/api.py`) with `POST /import/csv` endpoint for CSV ingestion. Upsert logic looks up `WorkoutExercise` by the full `(workout_id, exercise_id, exercise_index)` key; on routine re-import the existing `WorkoutExercise` set is purged (ORM cascade drops the child `Set` rows) before re-inserting. Structured exception handlers (422/409/500) and request logging middleware with X-Request-ID. Structured logging configured (`workout_mcp/logging.py`) with structlog (JSON/console renderers). MCP server shelf implemented (`workout_mcp/mcp_server.py`) with FastMCP instance (stateless HTTP) and DB session helper. MCP server entry point (`mcp_server_main.py`) runs as a standalone uvicorn process on port 9091 with lifespan integration. All 7 MCP tools implemented: `get_workout_by_date_range`, `get_workout_by_routine`, `get_workout_by_exercise`, `get_workout_count`, `get_last_workout`, `get_max_pr_by_exercise`, `get_min_pr_by_exercise` with tests (`tests/test_mcp_tools.py`). Docker support added: `Dockerfile`, `.dockerignore`, `docker-compose.prod.yml`. Test infrastructure in place: `tests/conftest.py` (transaction-isolated fixtures + TestClient), `tests/test_models.py`, `tests/test_database.py` (integration tests), `tests/test_parser.py` (parser tests), `tests/test_api.py` (API integration tests including error paths), `tests/test_config.py` (config tests), `tests/test_logging.py` (logging tests), `tests/test_main.py` (app structure tests), `tests/test_mcp_tools.py` (MCP tool tests including xfail error paths), `tests/fixtures/` (CSV test data including `duplicate_exercise.csv`). 90% coverage threshold enforced in CI; structlog, pydantic-settings, exception handlers, request logging middleware, MCP tool error handling all in place.
 - Dev tooling configured: ruff (lint + format), mypy (strict mode), pytest, pre-commit hooks.
 - Config files: `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, `alembic.ini`, `docker-compose.yml`, `docker-compose.prod.yml`, `Dockerfile`, `.dockerignore`, `.env.example`.
-- Application modules: `workout_mcp/config.py` (pydantic-settings), `workout_mcp/database.py`, `workout_mcp/logging.py` (structlog), `workout_mcp/api.py` (exception handlers + middleware), `workout_mcp/mcp_server.py` (error handling), `workout_mcp/parser.py`, `main.py`, `mcp_server_main.py`.
+- Application modules: `workout_mcp/config.py` (pydantic-settings), `workout_mcp/database.py`, `workout_mcp/logging.py` (structlog), `workout_mcp/api.py` (exception handlers + middleware, replace-on-reimport for `WorkoutExercise`), `workout_mcp/mcp_server.py` (error handling), `workout_mcp/parser.py` (occurrence-aware), `main.py`, `mcp_server_main.py`.
 
 ## Local Development
 
-To start PostgreSQL for local development:
+1. Copy the example environment file and adjust values for your machine:
+
+```bash
+cp .env.example .env
+```
+
+2. Start PostgreSQL for local development:
 
 ```bash
 docker-compose up -d
 ```
 
-To run migrations:
+3. Run migrations:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp uv run alembic upgrade head
 ```
 
-To run tests (requires PostgreSQL running):
+4. Run tests (requires PostgreSQL running):
 
 ```bash
 TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test uv run pytest
@@ -58,7 +64,7 @@ TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workout_mcp_test
 - **REST API**: `POST /import/csv` to ingest Hevy exports.
 - **MCP Tools**: `get_workout_by_date_range`, `get_workout_by_routine`, `get_workout_by_exercise`, `get_workout_count`, `get_min_pr_by_exercise`, `get_max_pr_by_exercise`, `get_last_workout`.
 - **Test Coverage**: 90% threshold enforced in CI via `pytest-cov`. Run with `uv run pytest --cov --cov-report=term-missing --cov-fail-under=90`.
-- **DB Schema**: see `README.md` ER diagram. Tables: `routine`, `workout`, `exercise`, `workout_exercise`, `set`.
+- **DB Schema**: see `README.md` ER diagram. Tables: `routine`, `workout`, `exercise`, `workout_exercise`, `set`. The `workout_exercise` unique key is `(workout_id, exercise_id, exercise_index)` so a routine can legitimately include the same exercise at multiple positions; the parser emits a distinct `ParsedExercise` per occurrence and `/import/csv` upserts each by the full three-column key, purging stale `WorkoutExercise` rows on re-import so reorders and additions produce the exact new layout.
 
 ## Notes for Agents
 
