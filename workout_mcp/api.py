@@ -142,7 +142,6 @@ async def import_csv(
     workouts_created = 0
     exercises_created = 0
     workout_exercises_created = 0
-    workout_exercises_updated = 0
     sets_created = 0
     sets_discarded = 0
 
@@ -174,6 +173,18 @@ async def import_csv(
                     db.add(workout)
                     db.flush()
                     workouts_created += 1
+                else:
+                    # Re-import path: clear stale WorkoutExercise rows (and
+                    # their Set children, via ORM cascade) so the upsert below
+                    # produces exactly the new layout. Use ORM-level delete so
+                    # the cascade fires; a bulk query.delete() would bypass it
+                    # and trip the FK from set.workout_exercise_id.
+                    stale_workout_exercises = (
+                        db.query(WorkoutExercise).filter_by(workout_id=workout.id).all()
+                    )
+                    for stale_we in stale_workout_exercises:
+                        db.delete(stale_we)
+                    db.flush()
 
                 for parsed_exercise in parsed_workout.exercises:
                     exercise = db.query(Exercise).filter_by(name=parsed_exercise.name).first()
@@ -188,6 +199,7 @@ async def import_csv(
                         .filter_by(
                             workout_id=workout.id,
                             exercise_id=exercise.id,
+                            exercise_index=parsed_exercise.exercise_index,
                         )
                         .first()
                     )
@@ -200,9 +212,6 @@ async def import_csv(
                         db.add(workout_exercise)
                         db.flush()
                         workout_exercises_created += 1
-                    elif workout_exercise.exercise_index != parsed_exercise.exercise_index:
-                        workout_exercise.exercise_index = parsed_exercise.exercise_index
-                        workout_exercises_updated += 1
 
                     for parsed_set in parsed_exercise.sets:
                         set_ = (
