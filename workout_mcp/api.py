@@ -23,7 +23,7 @@ from workout_mcp.hevy_client import HevyAPIError, HevyClient
 from workout_mcp.logging import get_logger
 from workout_mcp.models import Exercise, Routine, Set, Workout, WorkoutExercise
 from workout_mcp.parser import ParseError, parse_hevy_csv
-from workout_mcp.sync import start_scheduler
+from workout_mcp.sync import SyncMode, trigger_sync
 from workout_mcp.sync_service import upsert_hevy_workout
 
 logger = get_logger(__name__)
@@ -31,10 +31,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    scheduler = start_scheduler(SessionLocal)
     yield
-    if scheduler is not None:
-        scheduler.shutdown()
 
 
 app = FastAPI(title="Workout MCP Server", lifespan=lifespan)
@@ -310,3 +307,19 @@ async def hevy_webhook(
 
     background_tasks.add_task(_process_webhook_workout, workout_id)
     return {"status": "ok"}
+
+
+@app.post("/sync/hevy", status_code=202)
+async def sync_hevy(
+    background_tasks: BackgroundTasks,
+    mode: SyncMode = "incremental",
+) -> dict[str, str]:
+    """Trigger an on-demand Hevy sync.
+
+    The sync runs in a background task.  Query parameter ``mode`` accepts:
+
+    - ``"incremental"`` (default) — poll recent events via ``/v1/workouts/events``
+    - ``"full"`` — fetch all workouts via ``/v1/workouts``
+    """
+    background_tasks.add_task(trigger_sync, SessionLocal, mode)
+    return {"status": "sync_started", "mode": mode}

@@ -354,3 +354,27 @@ def test_import_csv_allows_duplicate_exercise_in_routine(
     assert len(bench_rows) == 3
     assert [r.exercise_index for r in bench_rows] == [0, 2, 3]
     assert sum(len(r.sets) for r in bench_rows) == 3
+
+
+def test_sync_hevy_endpoint_default_mode(client: TestClient) -> None:
+    response = client.post("/sync/hevy")
+
+    assert response.status_code == 202
+    data = response.json()
+    assert data["status"] == "sync_started"
+    assert data["mode"] == "incremental"
+
+
+def test_sync_hevy_endpoint_full_mode(client: TestClient) -> None:
+    response = client.post("/sync/hevy?mode=full")
+
+    assert response.status_code == 202
+    data = response.json()
+    assert data["status"] == "sync_started"
+    assert data["mode"] == "full"
+
+
+def test_sync_hevy_endpoint_invalid_mode(client: TestClient) -> None:
+    response = client.post("/sync/hevy?mode=invalid")
+
+    assert response.status_code == 422
