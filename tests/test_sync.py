@@ -303,64 +303,18 @@ async def test_sync_upsert_failure_rolls_back(db_session: Session) -> None:
 
 
 @pytest.mark.anyio
-async def test_trigger_sync_incremental_calls_sync_hevy_workouts(db_session: Session) -> None:
+async def test_trigger_sync_calls_sync_hevy_workouts(db_session: Session) -> None:
     with (
         patch("workout_mcp.sync.sync_hevy_workouts", AsyncMock()) as mock_sync,
         patch("workout_mcp.sync.settings.hevy_api_key", "test-api-key"),
     ):
-        await trigger_sync(lambda: db_session, mode="incremental")
+        await trigger_sync(lambda: db_session)
 
     mock_sync.assert_awaited_once()
 
 
 @pytest.mark.anyio
-async def test_trigger_sync_full_fetches_all_workouts(db_session: Session) -> None:
-    mock_workouts_page_1: dict[str, Any] = {
-        "workouts": [
-            {
-                "id": "w1",
-                "title": "Push Day",
-                "description": None,
-                "start_time": "2024-01-01T10:00:00+00:00",
-                "end_time": "2024-01-01T11:00:00+00:00",
-                "updated_at": "2024-01-01T12:00:00+00:00",
-                "routine_name": "Push",
-                "exercises": [],
-            }
-        ]
-    }
-    mock_workouts_page_2: dict[str, Any] = {"workouts": []}
-
-    with (
-        patch("workout_mcp.sync.HevyClient") as mock_client_cls,
-        patch("workout_mcp.sync.settings.hevy_api_key", "test-api-key"),
-    ):
-        client = AsyncMock()
-        client.get_workouts = AsyncMock(side_effect=[mock_workouts_page_1, mock_workouts_page_2])
-        client.close = AsyncMock()
-        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=client)
-        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=None)
-
-        await trigger_sync(lambda: db_session, mode="full")
-
-    assert db_session.query(Workout).count() == 1
-    workout = db_session.query(Workout).first()
-    assert workout is not None
-    assert workout.title == "Push Day"
-
-    sync_state = db_session.query(SyncState).first()
-    assert sync_state is not None
-    assert sync_state.last_sync_at is not None
-
-
-@pytest.mark.anyio
 async def test_trigger_sync_no_api_key_skips(db_session: Session) -> None:
     with patch("workout_mcp.sync.settings.hevy_api_key", None):
-        await trigger_sync(lambda: db_session, mode="incremental")
+        await trigger_sync(lambda: db_session)
     assert db_session.query(Workout).count() == 0
-
-
-@pytest.mark.anyio
-async def test_trigger_sync_unknown_mode_raises() -> None:
-    with pytest.raises(ValueError, match="Unknown sync mode"):
-        await trigger_sync(lambda: None, mode="invalid")  # type: ignore[arg-type,return-value]
