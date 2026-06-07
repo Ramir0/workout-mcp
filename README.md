@@ -10,6 +10,7 @@ The Workout MCP Server acts as a centralized data hub for fitness tracking, allo
 
 ### REST API
 - **CSV Import**: Import workout data from CSV files exported from the Hevy application
+- **On-Demand Sync**: Trigger Hevy synchronization on demand — incremental (recent events) or full (all workouts) — see [Sync Endpoint](#hevy-sync-endpoint)
 - Standardized data ingestion pipeline that normalizes and validates workout records
 - Structured exception handling with field-level validation errors (422), constraint violations (409), and safe internal error responses (500)
 - Request logging middleware with `X-Request-ID` propagation and structured JSON/console logging via `structlog`
@@ -116,7 +117,7 @@ flowchart TB
     end
 
     subgraph API["REST API Server — port 9090"]
-        API_APP[FastAPI<br/>POST /import/csv, validation]
+        API_APP[FastAPI<br/>POST /import/csv<br/>POST /sync/hevy<br/>POST /webhooks/hevy<br/>Hevy API client & sync]
     end
 
     subgraph DB["Relational Database — PostgreSQL"]
@@ -258,6 +259,45 @@ flowchart LR
 - The actual workout fetch and database upsert happen asynchronously in a background task.
 - If `HEVY_API_KEY` is not configured, the endpoint returns `503 Service Unavailable`.
 
+---
+
+### Hevy Sync Endpoint
+
+Trigger a Hevy API sync on demand via the REST API. The sync runs as a background task.
+
+#### `POST /sync/hevy`
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `mode` | `string` | `incremental` | Sync mode: `"incremental"` (poll recent events) or `"full"` (fetch all workouts) |
+
+**Incremental mode** polls `/v1/workouts/events` for any workouts updated since the last sync and upserts them. Tracks progress via the `SyncState` watermark.
+
+**Full mode** fetches all workouts via paginated `/v1/workouts`, upserts each, and updates the watermark at the end. Use this for initial backfill or when you want to guarantee a complete refresh.
+
+**Examples:**
+
+```bash
+# Incremental sync (default)
+curl -X POST http://localhost:9090/sync/hevy
+
+# Full sync
+curl -X POST http://localhost:9090/sync/hevy?mode=full
+```
+
+**Response:**
+
+```json
+{
+  "status": "sync_started",
+  "mode": "incremental"
+}
+```
+
+The endpoint returns immediately (HTTP 200). The actual sync runs in a background task. If `HEVY_API_KEY` is not configured, the background task logs a warning and skips the sync.
+
 ### MCP Client Configuration
 
 #### Claude Desktop
@@ -378,7 +418,11 @@ workout-mcp/
 │   ├── models.py                     # SQLAlchemy ORM models
 │   ├── api.py                        # FastAPI app, REST endpoints, exception handlers, middleware
 │   ├── mcp_server.py                 # FastMCP server & tools with error handling
-│   └── parser.py                     # Hevy CSV export parser
+│   ├── parser.py                     # Hevy CSV export parser
+│   ├── hevy_client.py                # Async HTTP client for Hevy REST API
+│   ├── hevy_mapper.py                # Maps Hevy API responses to ORM models
+│   ├── sync.py                       # Sync operations (incremental events + full sync)
+│   └── sync_service.py               # DB upsert logic for Hevy workouts
 ├── .dockerignore                        # Docker build exclusions
 ├── Dockerfile                           # Production container build
 ├── docker-compose.yml                # PostgreSQL container for local development
@@ -396,9 +440,10 @@ workout-mcp/
 ## Data Flow
 
 1. **Import**: CSV data from Hevy is parsed and validated by `workout_mcp/parser.py`
-2. **Storage**: Data is persisted in the relational schema (Routine -> Workout -> Exercise -> Set) via the REST API
-3. **Query**: MCP tools provide filtered access to workout history
-4. **Analysis**: AI agents can calculate trends, PRs, volume, and training patterns
+2. **Sync**: On-demand endpoint (`POST /sync/hevy`) or webhooks (`POST /webhooks/hevy`) fetch data via the Hevy REST API (`workout_mcp/hevy_client.py`), map to ORM models (`workout_mcp/hevy_mapper.py`), and upsert into the database (`workout_mcp/sync_service.py`)
+3. **Storage**: Data is persisted in the relational schema (Routine -> Workout -> Exercise -> Set) via the REST API
+4. **Query**: MCP tools provide filtered access to workout history
+5. **Analysis**: AI agents can calculate trends, PRs, volume, and training patterns
 
 ## Docker Deployment
 
