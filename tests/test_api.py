@@ -357,10 +357,7 @@ def test_import_csv_allows_duplicate_exercise_in_routine(
 
 
 def test_sync_hevy_endpoint_default_mode(client: TestClient) -> None:
-    from unittest.mock import patch
-
-    with patch("workout_mcp.api.settings.hevy_api_key", "test-api-key"):
-        response = client.post("/sync/hevy")
+    response = client.post("/sync/hevy")
 
     assert response.status_code == 200
     data = response.json()
@@ -369,10 +366,7 @@ def test_sync_hevy_endpoint_default_mode(client: TestClient) -> None:
 
 
 def test_sync_hevy_endpoint_full_mode(client: TestClient) -> None:
-    from unittest.mock import patch
-
-    with patch("workout_mcp.api.settings.hevy_api_key", "test-api-key"):
-        response = client.post("/sync/hevy?mode=full")
+    response = client.post("/sync/hevy?mode=full")
 
     assert response.status_code == 200
     data = response.json()
@@ -381,9 +375,6 @@ def test_sync_hevy_endpoint_full_mode(client: TestClient) -> None:
 
 
 def test_sync_hevy_endpoint_invalid_mode(client: TestClient) -> None:
-    from unittest.mock import patch
-
-    with patch("workout_mcp.api.settings.hevy_api_key", "test-api-key"):
-        response = client.post("/sync/hevy?mode=invalid")
+    response = client.post("/sync/hevy?mode=invalid")
 
     assert response.status_code == 422

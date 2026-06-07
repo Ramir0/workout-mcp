@@ -321,10 +321,5 @@ async def sync_hevy(
     - ``"incremental"`` (default) — poll recent events via ``/v1/workouts/events``
     - ``"full"`` — fetch all workouts via ``/v1/workouts``
     """
-    if mode not in ("incremental", "full"):
-        raise HTTPException(
-            status_code=422,
-            detail="mode must be 'incremental' or 'full'",
-        )
     background_tasks.add_task(trigger_sync, SessionLocal, mode)
     return {"status": "sync_started", "mode": mode}
