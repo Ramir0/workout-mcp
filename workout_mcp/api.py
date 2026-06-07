@@ -23,7 +23,6 @@ from workout_mcp.hevy_client import HevyAPIError, HevyClient
 from workout_mcp.logging import get_logger
 from workout_mcp.models import Exercise, Routine, Set, Workout, WorkoutExercise
 from workout_mcp.parser import ParseError, parse_hevy_csv
-from workout_mcp.sync import start_scheduler
 from workout_mcp.sync_service import upsert_hevy_workout
 
 logger = get_logger(__name__)
@@ -31,10 +30,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    scheduler = start_scheduler(SessionLocal)
     yield
-    if scheduler is not None:
-        scheduler.shutdown()
 
 
 app = FastAPI(title="Workout MCP Server", lifespan=lifespan)
