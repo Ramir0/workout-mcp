@@ -135,7 +135,17 @@ async def _sync_full(db_factory: Callable[[], Session]) -> None:
                 except HevyAPIError as exc:
                     if exc.status_code == 404:
                         break
-                    raise
+                    logger.error(
+                        "full_sync_api_error",
+                        error=str(exc),
+                        page=page,
+                        url=exc.url,
+                        method=exc.method,
+                        params=exc.params,
+                        status_code=exc.status_code,
+                        response_text=exc.response_text,
+                    )
+                    return
 
                 workouts = response.get("workouts", [])
                 if not workouts:
@@ -209,6 +219,9 @@ async def _process_event(db: Session, client: HevyClient, event: dict[str, Any])
             logger.error("sync_upsert_failed", error=str(exc))
 
     elif event_type == "deleted":
+        # Without hevy_id in DB, we cannot reliably match deleted events to local workouts.
+        # Deletion events are logged but skipped. Webhooks handle real-time updates;
+        # missing deletions are an acceptable tradeoff for schema simplicity.
         workout_id = event.get("workout_id")
         logger.info("sync_workout_deleted_skipped", workout_id=workout_id)
     else:
