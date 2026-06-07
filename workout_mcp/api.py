@@ -309,7 +309,7 @@ async def hevy_webhook(
     return {"status": "ok"}
 
 
-@app.post("/sync/hevy")
+@app.post("/sync/hevy", status_code=202)
 async def sync_hevy(
     background_tasks: BackgroundTasks,
     mode: SyncMode = "incremental",

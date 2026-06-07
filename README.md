@@ -296,7 +296,7 @@ curl -X POST http://localhost:9090/sync/hevy?mode=full
 }
 ```
 
-The endpoint returns immediately (HTTP 200). The actual sync runs in a background task. If `HEVY_API_KEY` is not configured, the background task logs a warning and skips the sync.
+The endpoint returns immediately (HTTP 202 Accepted). The actual sync runs in a background task. If `HEVY_API_KEY` is not configured, the background task logs a warning and skips the sync.
 
 ### MCP Client Configuration
 
