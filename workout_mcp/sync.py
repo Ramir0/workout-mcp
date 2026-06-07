@@ -1,10 +1,10 @@
-"""Hevy sync operations — incremental (events) and full (all workouts)."""
+"""Hevy sync — incremental polling of workout events."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -17,34 +17,16 @@ from workout_mcp.sync_service import upsert_hevy_workout
 
 logger = get_logger(__name__)
 
-SyncMode = Literal["incremental", "full"]
-
 
 async def trigger_sync(
     db_factory: Callable[[], Session],
-    mode: SyncMode = "incremental",
 ) -> None:
-    """Trigger a Hevy sync in the given mode.
-
-    Args:
-        db_factory: Callable that returns a fresh SQLAlchemy Session.
-        mode: ``"incremental"`` to poll recent events (default),
-              ``"full"`` to fetch all workouts.
-
-    Raises:
-        ValueError: If *mode* is not recognised.
-    """
-    if mode == "incremental":
-        db = db_factory()
-        try:
-            await sync_hevy_workouts(db)
-        finally:
-            db.close()
-    elif mode == "full":
-        await _sync_full(db_factory)
-    else:
-        msg = f"Unknown sync mode: {mode!r}"
-        raise ValueError(msg)
+    """Poll Hevy API for recent workout events and sync to local DB."""
+    db = db_factory()
+    try:
+        await sync_hevy_workouts(db)
+    finally:
+        db.close()
 
 
 async def sync_hevy_workouts(db: Session) -> None:
@@ -110,64 +92,6 @@ async def sync_hevy_workouts(db: Session) -> None:
     sync_state.updated_at = datetime.now(UTC)
     db.commit()
     logger.info("sync_completed", events_processed=total_events)
-
-
-async def _sync_full(db_factory: Callable[[], Session]) -> None:
-    """Fetch all workouts from Hevy API and upsert them."""
-    if not settings.hevy_api_key:
-        logger.info("full_sync_skipped_no_api_key")
-        return
-
-    db = db_factory()
-    try:
-        sync_state = db.query(SyncState).filter_by(id=1).first()
-        if sync_state is None:
-            sync_state = SyncState(id=1)
-            db.add(sync_state)
-            db.flush()
-
-        total = 0
-        async with HevyClient() as client:
-            page = 1
-            while True:
-                try:
-                    response = await client.get_workouts(page=page)
-                except HevyAPIError as exc:
-                    if exc.status_code == 404:
-                        break
-                    logger.error(
-                        "full_sync_api_error",
-                        error=str(exc),
-                        page=page,
-                        url=exc.url,
-                        method=exc.method,
-                        params=exc.params,
-                        status_code=exc.status_code,
-                        response_text=exc.response_text,
-                    )
-                    return
-
-                workouts = response.get("workouts", [])
-                if not workouts:
-                    break
-
-                for workout_data in workouts:
-                    try:
-                        upsert_hevy_workout(db, workout_data)
-                        db.commit()
-                        total += 1
-                    except Exception as exc:
-                        db.rollback()
-                        logger.error("sync_upsert_failed", error=str(exc))
-
-                page += 1
-
-        sync_state.last_sync_at = datetime.now(UTC)
-        sync_state.updated_at = datetime.now(UTC)
-        db.commit()
-        logger.info("full_sync_completed", workouts_synced=total)
-    finally:
-        db.close()
 
 
 def _extract_event_time(event: dict[str, Any]) -> datetime | None:
